@@ -497,114 +497,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _menuButtons() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 32, 16, 0),
-                    child: ScaleTransition(
-                      scale: _addBAnimation,
-                      child: FloatingActionButton(
-                        heroTag: null,
-                        mini: true,
-                        child: Icon(Icons.perm_media),
-                        onPressed: () {
-                          _addBAnimationController.reverse(
-                              from: _addBAnimation.value);
-                          _getMedia();
-                        },
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(16, 32, 0, 0),
-                    child: ScaleTransition(
-                      scale: _addBAnimation,
-                      child: FloatingActionButton(
-                        heroTag: null,
-                        mini: true,
-                        child: Icon(Icons.insert_link),
-                        onPressed: () {
-                          _addBAnimationController.reverse(
-                              from: _addBAnimation.value);
-                          _pickURL();
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              (!_isImageLoaded)
-                  ? SizedBox()
-                  : Padding(
-                      padding: EdgeInsets.fromLTRB(40, 32, 40, 0),
-                      child: ScaleTransition(
-                        scale: _closeBAnimation,
-                        child: FloatingActionButton(
-                          heroTag: null,
-                          backgroundColor: Colors.red,
-                          mini: true,
-                          child: Icon(Icons.highlight_off),
-                          onPressed: () {
-                            _closeBAnimationController.reverse();
-                            setState(() {
-                              _image = null;
-                              _isImageLoaded = false;
-                            });
+    return FloatingActionButton(
+      heroTag: null,
+      child: (_isImageLoaded) ? Icon(Icons.search) : Icon(Icons.add),
+      onPressed: (_isImageLoaded)
+          ? () {
+              _panelController.close();
+              _search();
+            }
+          : () {
+              showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Wrap(
+                      children: [
+                        ListTile(
+                          leading: Icon(Icons.perm_media),
+                          title: Text("Open Gallery"),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _panelController.close();
+                            _getMedia();
                           },
                         ),
-                      ),
-                    ),
-            ],
-          ),
-          SizedBox(
-            height: 16,
-          ),
-          FloatingActionButton(
-            heroTag: null,
-            child: (_isImageLoaded) ? Icon(Icons.search) : Icon(Icons.add),
-            onPressed: (_isImageLoaded)
-                ? () {
-                    _panelController.close();
-                    _search();
-                  }
-                : () {
-                    showModalBottomSheet(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Wrap(
-                            children: [
-                              ListTile(
-                                leading: Icon(Icons.perm_media),
-                                title: Text("Open Gallery"),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _panelController.close();
-                                  _getMedia();
-                                },
-                              ),
-                              ListTile(
-                                leading: Icon(Icons.insert_link),
-                                title: Text("Pick URL"),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _panelController.close();
-                                  _pickURL();
-                                },
-                              )
-                            ],
-                          );
-                        });
-                  },
-          ),
-        ],
-      ),
+                        ListTile(
+                          leading: Icon(Icons.insert_link),
+                          title: Text("Pick URL"),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _panelController.close();
+                            _pickURL();
+                          },
+                        )
+                      ],
+                    );
+                  });
+            },
     );
   }
 
@@ -815,9 +743,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       shape: CircularNotchedRectangle(),
       color: Colors.blue,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          IconButton(
+          FlatButton(
+            padding: EdgeInsets.zero,
             onPressed: () {
               if (_panelController.isPanelClosed) {
                 _panelController.animatePanelToSnapPoint();
@@ -825,18 +754,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _panelController.close();
               }
             },
-            icon: Icon(Icons.more_vert),
-            color: Colors.white,
+            child: Container(
+              child: Center(
+                child: Text(
+                  "Options",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              height: 48,
+              width: MediaQuery.of(context).size.width / 2 - 42,
+            ),
           ),
-          (_isImageLoaded)
-              ? IconButton(
-                  onPressed: () {
-                    _editImage();
-                  },
-                  icon: Icon(Icons.edit),
-                  color: Colors.white,
-                )
-              : SizedBox(),
+          SizedBox(
+            width: 84,
+          ),
+          Container(
+            height: 48,
+            width: MediaQuery.of(context).size.width / 2 - 42,
+            child: (_isImageLoaded)
+                ? Row(
+                    children: [
+                      Flexible(
+                        child: FlatButton(
+                          child: Container(
+                            height: 48,
+                            child: Icon(Icons.close, color: Colors.red,),
+                          ),
+                          onPressed: () {
+                            _closeBAnimationController.reverse();
+                            setState(() {
+                              _image = null;
+                              _isImageLoaded = false;
+                            });
+                          },
+                        ),
+                      ),
+                      Flexible(
+                        child: FlatButton(
+                          child: Container(
+                            height: 48,
+                            child: Icon(Icons.edit, color: Colors.white,),
+                          ),
+                          onPressed: () {
+                            _editImage();
+                          },
+                        ),
+                      ),
+                    ],
+                  )
+                : SizedBox(),
+          )
         ],
       ),
     );
@@ -950,14 +917,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      body: _mainBody(),
-      bottomNavigationBar: _bab(),
-      floatingActionButton: _menuButtons(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      resizeToAvoidBottomInset: false,
-      extendBody: true,
+    return WillPopScope(
+      onWillPop: () {
+        if (!_panelController.isPanelClosed) {
+          _panelController.close();
+          return Future.value(false);
+        }
+        return Future.value(true);
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        body: _mainBody(),
+        bottomNavigationBar: _bab(),
+        floatingActionButton: _menuButtons(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        resizeToAvoidBottomInset: false,
+        extendBody: true,
+      ),
     );
   }
 
