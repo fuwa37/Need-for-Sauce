@@ -1,6 +1,12 @@
-# need_for_sauce
+# Need for Sauce
 
-Sauce Finder
+Sauce finder
+
+TODO:
+
+* [ ] More configurations in Options
+* [ ] Add tooltip to explain each of options
+* [ ] Implement on-the-air update (auto-updater)
 
 ## Getting Started
 
