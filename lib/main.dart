@@ -49,7 +49,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   StreamSubscription _intentDataStreamSubscription;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _urlController = TextEditingController();
@@ -58,17 +58,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   ExpandedTileController _expandedTileController = ExpandedTileController();
   dynamic _image;
   CancelToken token;
-  AnimationController _addBAnimationController;
-  Animation<double> _addBAnimation;
-  AnimationController _closeBAnimationController;
-  Animation<double> _closeBAnimation;
   bool _isImageLoaded = false;
   bool _isLoadingHead;
   bool _isAllDB = true;
   SearchOption _searchOption;
   bool _getAddInfo;
   SplayTreeMap<String, String> _sauceNaoDBMask;
-  bool _addBOpen = false;
 
   Future _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
@@ -80,7 +75,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     if (fileType[0] == 'image') {
       setState(() {
-        _closeBAnimationController.forward();
         _image = media;
       });
     } else if (fileType[0] == 'video') {
@@ -91,7 +85,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (result == null && videoIntent == null) _getMedia();
 
       setState(() {
-        _closeBAnimationController.forward();
         _image = result;
       });
     } else {
@@ -133,7 +126,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String _type = headers['content-type'][0];
     if (_type.split('/')[0] == 'image') {
       setState(() {
-        _closeBAnimationController.forward();
         _isLoadingHead = false;
         _image = url;
       });
@@ -143,7 +135,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return VideoCapture(url);
       }));
       setState(() {
-        _closeBAnimationController.forward();
         _isLoadingHead = false;
         _image = result;
       });
@@ -541,19 +532,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       body: Padding(
         padding:
             EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top, 0, 48),
-        child: GestureDetector(
-          onTap: () {
-            if (_addBAnimationController.isCompleted) {
-              _addBAnimationController.reverse();
-            }
-          },
-          behavior: HitTestBehavior.translucent,
-          child: Container(
+        child: Container(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             child: _imageViewer(),
           ),
-        ),
       ),
       backdropEnabled: true,
       controller: _panelController,
@@ -568,18 +551,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       maxHeight: MediaQuery.of(context).size.height -
           MediaQuery.of(context).padding.top,
       snapPoint: 0.5,
-      onPanelSlide: (val) {
-        if (val == 0.5) {
-          if (_addBOpen) {
-            _addBAnimationController.reverse();
-          }
-        }
-        if (val >= 0.5) {
-          _closeBAnimationController.reverse();
-        } else if (val <= 0.45) {
-          _closeBAnimationController.forward();
-        }
-      },
       header: Container(
           width: MediaQuery.of(context).size.width,
           padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
@@ -781,7 +752,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             child: Icon(Icons.close, color: Colors.red,),
                           ),
                           onPressed: () {
-                            _closeBAnimationController.reverse();
                             setState(() {
                               _image = null;
                               _isImageLoaded = false;
@@ -854,15 +824,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     ScreenUtil.init();
-
-    _addBAnimationController = AnimationController(
-        duration: const Duration(milliseconds: 150), vsync: this, value: 0);
-    _addBAnimation =
-        CurvedAnimation(parent: _addBAnimationController, curve: Curves.linear);
-    _closeBAnimationController = AnimationController(
-        duration: const Duration(milliseconds: 150), vsync: this, value: 0);
-    _closeBAnimation = CurvedAnimation(
-        parent: _closeBAnimationController, curve: Curves.linear);
 
     _expandedTileController.addListener(_expansionTileListener);
 
@@ -939,8 +900,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   dispose() {
-    _addBAnimationController.dispose();
-    _closeBAnimationController.dispose();
     _intentDataStreamSubscription.cancel();
     _urlController.dispose();
     _expandedTileController.dispose();
