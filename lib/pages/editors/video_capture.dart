@@ -98,125 +98,131 @@ class _VideoCaptureState extends State<VideoCapture>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white.withOpacity(0.5),
-      floatingActionButton: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: 16),
-        physics: NeverScrollableScrollPhysics(),
-        child: Column(
-          children: [
-            ScaleTransition(
-              scale: _cutBAnimation,
-              child: FloatingActionButton(
-                elevation: 0,
-                heroTag: null,
-                onPressed: () {
-                  _getThumbnail();
-                },
-                child: Icon(Icons.content_cut),
-                tooltip: "Cut",
-              ),
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            FloatingActionButton(
-              elevation: 0,
-              heroTag: null,
-              onPressed: () {
-                setState(() {
-                  if (_videoPlayerController.value.isPlaying) {
-                    _cutBAnimationController.forward();
-                    _chewieController.pause();
-                  } else {
-                    if (_videoPlayerController.value.position ==
-                        _videoPlayerController.value.duration) {
-                      _chewieController.seekTo(Duration(milliseconds: 0));
-                    }
-                    _cutBAnimationController.reverse();
-                    _chewieController.play();
-                  }
-                });
-              },
-              child: Icon(
-                _videoPlayerController.value.isPlaying
-                    ? Icons.pause
-                    : Icons.play_arrow,
-              ),
-              tooltip:
-                  _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-      bottomNavigationBar: BottomAppBar(
-        notchMargin: 36,
-        color: Colors.blue,
-        shape: CircularNotchedRectangle(),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(0, 0, 32, 0),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    if (_videoPlayerController.value.volume == 0) {
-                      _videoPlayerController.setVolume(100);
-                    } else {
-                      _videoPlayerController.setVolume(0);
-                    }
-                  });
-                },
-                icon: Icon(
-                  _videoPlayerController.value.volume == 0
-                      ? Icons.volume_off
-                      : Icons.volume_up,
+        backgroundColor: Colors.white.withOpacity(0.5),
+        bottomNavigationBar: BottomAppBar(
+          color: Colors.blue,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+            child: Row(
+              children: [
+                IconButton(
+                  color: Colors.white,
+                  onPressed: () {
+                    setState(() {
+                      if (_videoPlayerController.value.isPlaying) {
+                        _chewieController.pause();
+                      } else {
+                        if (_videoPlayerController.value.position ==
+                            _videoPlayerController.value.duration) {
+                          _chewieController.seekTo(Duration(milliseconds: 0));
+                        }
+                        _chewieController.play();
+                      }
+                    });
+                  },
+                  icon: Icon(
+                    _videoPlayerController.value.isPlaying
+                        ? Icons.pause
+                        : Icons.play_arrow,
+                  ),
+                  tooltip:
+                      _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
                 ),
-                color: Colors.white,
-                tooltip: "Mute",
-              ),
-              Flexible(
-                fit: FlexFit.tight,
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  height: 48,
-                  child: MaterialVideoProgressBar(
-                    _videoPlayerController,
-                    colors: ChewieProgressColors(
-                        playedColor: Colors.white,
-                        handleColor: Colors.white,
-                        bufferedColor: Colors.grey,
-                        backgroundColor: Colors.black),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      if (_videoPlayerController.value.volume == 0) {
+                        _videoPlayerController.setVolume(100);
+                      } else {
+                        _videoPlayerController.setVolume(0);
+                      }
+                    });
+                  },
+                  icon: Icon(
+                    _videoPlayerController.value.volume == 0
+                        ? Icons.volume_off
+                        : Icons.volume_up,
+                  ),
+                  color: Colors.white,
+                  tooltip: "Mute",
+                ),
+                Flexible(
+                  fit: FlexFit.tight,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                    height: 48,
+                    child: MaterialVideoProgressBar(
+                      _videoPlayerController,
+                      colors: ChewieProgressColors(
+                          playedColor: Colors.white,
+                          handleColor: Colors.white,
+                          bufferedColor: Colors.grey,
+                          backgroundColor: Colors.black),
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                child: Text(
-                  "${formatDuration(_currentVideoPosition ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                Container(
+                  child: Text(
+                    "${formatDuration(_currentVideoPosition ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: 72,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      body: (_chewieController == null)
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : Container(
-              padding: EdgeInsets.fromLTRB(
-                  0, MediaQuery.of(context).padding.top, 0, 0),
-              height: MediaQuery.of(context).size.height -
-                  (MediaQuery.of(context).padding.bottom),
-              child: Chewie(
-                controller: _chewieController,
-              ),
-            ),
-    );
+        body: (_chewieController == null)
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : Padding(
+                padding: EdgeInsets.fromLTRB(
+                    0, MediaQuery.of(context).padding.top, 0, 0),
+                child: Stack(
+                  children: [
+                    Container(
+                      height: MediaQuery.of(context).size.height -
+                          (MediaQuery.of(context).padding.bottom),
+                      child: Chewie(
+                        controller: _chewieController,
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                            Colors.black.withOpacity(0.25),
+                            Colors.transparent
+                          ])),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          IconButton(
+                            icon: Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.content_cut,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              _getThumbnail();
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ));
   }
 
   @override

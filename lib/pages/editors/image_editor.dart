@@ -36,9 +36,7 @@ class _ImageEditorState extends State<ImageEditor> {
     return EditorConfig(
         maxScale: 8.0,
         editorMaskColorHandler: (BuildContext context, bool pointerdown) {
-          return Theme.of(context)
-              .scaffoldBackgroundColor
-              .withOpacity(pointerdown ? 0.5 : 0.8);
+          return Colors.black.withOpacity(pointerdown ? 0.75 : 0.5);
         },
         cropRectPadding: EdgeInsets.fromLTRB(
             45, MediaQuery.of(context).padding.top + 80, 45, 30),
@@ -300,7 +298,6 @@ class _ImageEditorState extends State<ImageEditor> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: <Widget>[
@@ -311,7 +308,14 @@ class _ImageEditorState extends State<ImageEditor> {
             child: Align(
               alignment: Alignment.topCenter,
               child: Container(
-                  color: Colors.black.withOpacity(0.25),
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                        Colors.black.withOpacity(0.25),
+                        Colors.transparent
+                      ])),
                   child: _navigationBar()),
             ),
           ),
