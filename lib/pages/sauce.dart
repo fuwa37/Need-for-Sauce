@@ -63,7 +63,6 @@ class SauceDescState extends State<SauceDesc> {
   }
 
   Widget sauceResult() {
-    print(widget.sauce.reply);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[

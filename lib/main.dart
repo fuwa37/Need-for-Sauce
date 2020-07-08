@@ -362,6 +362,30 @@ class _HomePageState extends State<HomePage> {
       case SearchOption.SauceNao:
         {
           if (_isAllDB != false) {
+            BuildContext dialogContext;
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                dialogContext = context;
+                return WillPopScope(
+                  onWillPop: () {
+                    try {
+                      token.cancel("Back Button");
+                    } on Exception catch (e) {
+                      print(e);
+                    }
+                    return Future.value(true);
+                  },
+                  child: AlertDialog(
+                    title: ListTile(
+                      leading: CircularProgressIndicator(),
+                      title: Text("Loading..."),
+                    ),
+                  ),
+                );
+              },
+            );
             print("Use Sauce Nao");
             try {
               var r = await _sauceNaoConn();
@@ -376,6 +400,7 @@ class _HomePageState extends State<HomePage> {
                     } on NoInfoException catch (e) {
                       print(e);
                     } finally {
+                      Navigator.pop(dialogContext);
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
                         return SauceDesc(
@@ -383,6 +408,7 @@ class _HomePageState extends State<HomePage> {
                       }));
                     }
                   } else {
+                    Navigator.pop(dialogContext);
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                       return SauceDesc(
@@ -390,6 +416,7 @@ class _HomePageState extends State<HomePage> {
                     }));
                   }
                 } else {
+                  Navigator.pop(dialogContext);
                   print("No Sauce");
                   print(
                       "Status: ${sauces.header.status}\nMessage: ${sauces.header.message}");
@@ -398,6 +425,7 @@ class _HomePageState extends State<HomePage> {
                 throw Exception("Response null");
               }
             } on Exception catch (e) {
+              Navigator.pop(dialogContext);
               print(e);
             }
           } else {
@@ -412,6 +440,30 @@ class _HomePageState extends State<HomePage> {
         }
       case SearchOption.Trace:
         {
+          BuildContext dialogContext;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              dialogContext = context;
+              return WillPopScope(
+                onWillPop: () {
+                  try {
+                    token.cancel("Back Button");
+                  } on Exception catch (e) {
+                    print(e);
+                  }
+                  return Future.value(true);
+                },
+                child: AlertDialog(
+                  title: ListTile(
+                    leading: CircularProgressIndicator(),
+                    title: Text("Loading..."),
+                  ),
+                ),
+              );
+            },
+          );
           print("Use Trace");
           try {
             var r = await _traceConn();
@@ -421,21 +473,25 @@ class _HomePageState extends State<HomePage> {
                 var sauce = sauces.docs[0];
                 if (_getAddInfo) {
                   sauce = await sauce.withInfo();
+                  Navigator.pop(dialogContext);
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 } else {
+                  Navigator.pop(dialogContext);
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 }
               } else {
+                Navigator.pop(dialogContext);
                 print("No Sauce");
               }
             } else {
               throw Exception("Response null");
             }
           } on Exception catch (e) {
+            Navigator.pop(dialogContext);
             print(e);
           }
           break;
@@ -533,10 +589,10 @@ class _HomePageState extends State<HomePage> {
         padding:
             EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top, 0, 48),
         child: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: _imageViewer(),
-          ),
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: _imageViewer(),
+        ),
       ),
       backdropEnabled: true,
       controller: _panelController,
@@ -652,9 +708,11 @@ class _HomePageState extends State<HomePage> {
                         onChanged: (val) {
                           setState(() {
                             if (_isAllDB == null || (val ?? false)) {
+                              SharedPreferencesUtils.setAllDB(true);
                               _isAllDB = true;
                               _sauceNaoDBMask.updateAll((key, value) => '1');
                             } else {
+                              SharedPreferencesUtils.setAllDB(false);
                               _isAllDB = false;
                               _sauceNaoDBMask.updateAll((key, value) => '0');
                               //_expandedTileController.expand();
@@ -749,7 +807,10 @@ class _HomePageState extends State<HomePage> {
                         child: FlatButton(
                           child: Container(
                             height: 48,
-                            child: Icon(Icons.close, color: Colors.red,),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.red,
+                            ),
                           ),
                           onPressed: () {
                             setState(() {
@@ -763,7 +824,10 @@ class _HomePageState extends State<HomePage> {
                         child: FlatButton(
                           child: Container(
                             height: 48,
-                            child: Icon(Icons.edit, color: Colors.white,),
+                            child: Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                            ),
                           ),
                           onPressed: () {
                             _editImage();

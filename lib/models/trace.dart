@@ -114,7 +114,7 @@ class TraceDocs {
     from = json['from'].toDouble();
     to = json['to'].toDouble();
     anilistId = json['anilist_id'];
-    at = json['at'];
+    at = json['at'].toDouble();
     date = json['season'];
     anime = json['anime'];
     filename = json['filename'];

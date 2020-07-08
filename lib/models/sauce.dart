@@ -51,7 +51,7 @@ class SauceObject {
         '&file=' +
         Uri.encodeQueryComponent(trace.filename).toString() +
         '&t=' +
-        trace.at.toString() +
+        trace.at.toInt().toString() +
         '&token=' +
         trace.tokenthumb;
     videoUrl = 'https://trace.moe/preview.php?anilist_id=' +
@@ -59,7 +59,7 @@ class SauceObject {
         '&file=' +
         Uri.encodeQueryComponent(trace.filename).toString() +
         '&t=' +
-        trace.at.toString() +
+        trace.at.toInt().toString() +
         '&token=' +
         trace.tokenthumb;
     title = trace.titleRomaji;

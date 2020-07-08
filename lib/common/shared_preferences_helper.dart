@@ -132,6 +132,7 @@ class SharedPreferencesUtils {
   }
 
   static Future<bool> setSNDBMask(String db, String value) async {
+    print("$db, $value");
     var prefs = await getPrefs();
 
     var map = await getSNDBMask();
