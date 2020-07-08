@@ -624,9 +624,9 @@ class _HomePageState extends State<HomePage> {
               MaterialButton(
                 shape: CircleBorder(),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  /*Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return AboutPage();
-                  }));
+                  }));*/
                 },
                 child: Icon(Icons.info_outline),
               ),
