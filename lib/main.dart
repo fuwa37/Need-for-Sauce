@@ -106,6 +106,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<bool> _checkURLAvailability(url) async {
+    Response r;
+
+    try {
+      r = await Dio()
+          .head(url, options: Options(sendTimeout: 1000, receiveTimeout: 1000));
+    } on DioError catch (e) {
+      print(e);
+      return false;
+    }
+
+    print(r.statusCode);
+  }
+
   _checkURLContentType(url) async {
     Response r;
 

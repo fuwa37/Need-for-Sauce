@@ -111,7 +111,7 @@ class _ImageEditorState extends State<ImageEditor> {
                         aspectRatio.text,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: (_selectedCrop == aspectRatio.value ||
                                   ((aspectRatio.value != null &&
                                           aspectRatio.value != 0 &&
@@ -336,12 +336,20 @@ class _ImageEditorState extends State<ImageEditor> {
                             ),
                           ),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: List.from(_cropAspectRatios
-                                .map((item) => _cropItems(item)))
-                              ..add(_customAspectRatios()),
-                          )
+                            children: [
+                              _customAspectRatios(),
+                              Flexible(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: List.from(_cropAspectRatios
+                                          .map((item) => _cropItems(item)))),
+                                ),
+                              )
+                            ],
+                          ),
                         ],
                       ),
                     ),

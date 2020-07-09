@@ -68,7 +68,7 @@ class TraceDocs {
   String date;
   String anime;
   String filename;
-  int episode;
+  dynamic episode;
   String tokenthumb;
   double similarity;
   String title;
@@ -183,7 +183,7 @@ class TraceDocs {
           date,
       "**Episode**": episode,
       "**Time**": "${returnTime(Duration(milliseconds: (at * 1000).toInt()))}",
-      "**Info**": (info != null) ? "\n($info)\n" : null,
+      "**Info**": (info?.isNotEmpty ?? false) ? "\n($info)\n" : null,
       "**Genres**": (genres != null) ? "${genres?.join(', ')}\n" : null,
       "**Source**": (source != null) ? "$source\n" : null,
       "**Description**": (description != null) ? "\n$description".replaceAll('<br>', '\n') : null,
