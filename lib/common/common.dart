@@ -252,6 +252,6 @@ class NoInfoException implements Exception {
 
   String toString() {
     if (message == null) return "Exception";
-    return "Exception: $message";
+    return "Couldn't get additional info: $message";
   }
 }

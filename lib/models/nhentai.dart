@@ -90,8 +90,21 @@ class NhentaiResult {
     try {
       response = await Sauce.nhentai().get(
           '/api/galleries/search?query=${Uri.encodeQueryComponent(source.replaceAll(RegExp(r'\s-'), ' '))}');
-    } on Exception catch (e) {
-      throw NoInfoException("Couldn't get info: $e");
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to nhentai.net");
+          }
+      }
     }
 
     if (response != null && response.data["result"].isNotEmpty) {

@@ -3,6 +3,7 @@ library models;
 import 'dart:convert';
 import 'package:need_for_sauce/common/http_request.dart';
 import 'package:need_for_sauce/common/common.dart';
+import 'package:dio/dio.dart';
 
 part 'anilist.dart';
 

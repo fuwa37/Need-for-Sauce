@@ -64,6 +64,9 @@ class _HomePageState extends State<HomePage> {
   SearchOption _searchOption;
   bool _getAddInfo;
   SplayTreeMap<String, String> _sauceNaoDBMask;
+  bool _showBanner = false;
+  String _bannerMessage = '';
+  Function() _bannerAction;
 
   Future _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
@@ -104,20 +107,6 @@ class _HomePageState extends State<HomePage> {
         _image = result;
       });
     }
-  }
-
-  Future<bool> _checkURLAvailability(url) async {
-    Response r;
-
-    try {
-      r = await Dio()
-          .head(url, options: Options(sendTimeout: 1000, receiveTimeout: 1000));
-    } on DioError catch (e) {
-      print(e);
-      return false;
-    }
-
-    print(r.statusCode);
   }
 
   _checkURLContentType(url) async {
@@ -413,13 +402,16 @@ class _HomePageState extends State<HomePage> {
                       sauce.data = await data.withInfo();
                     } on NoInfoException catch (e) {
                       print(e);
-                    } finally {
                       Navigator.pop(dialogContext);
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return SauceDesc(
-                            SauceObject.fromSauceNao(sauce.header, sauce.data));
-                      }));
+                      setState(() {
+                        _showBanner = true;
+                        _bannerMessage = e.toString();
+                        _bannerAction = () => Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return SauceDesc(SauceObject.fromSauceNao(
+                              sauce.header, sauce.data));
+                        }));
+                      });
                     }
                   } else {
                     Navigator.pop(dialogContext);
@@ -443,10 +435,13 @@ class _HomePageState extends State<HomePage> {
               print(e);
             }
           } else {
-            _scaffoldKey.currentState.showSnackBar(SnackBar(
-              content: Text("Select at least one database"),
-              behavior: SnackBarBehavior.floating,
-            ));
+            _showSnackBar("Select at least one database",
+                act: SnackBarAction(
+                  label: "DISMISS",
+                  onPressed: () {
+                    _scaffoldKey.currentState.removeCurrentSnackBar();
+                  },
+                ));
             _panelController.open();
             _expandedTileController.expand();
           }
@@ -597,17 +592,67 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  //Flutter MaterialBanner
+  Widget _banner() {
+    return Card(
+      elevation: 8,
+      margin: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsetsDirectional.only(
+                start: 16.0, top: 24.0, end: 16.0, bottom: 4.0),
+            child: Text(
+              "$_bannerMessage",
+              textAlign: TextAlign.start,
+            ),
+          ),
+          ButtonBar(alignment: MainAxisAlignment.spaceBetween, children: [
+            FlatButton(
+              child: Text("DISMISS"),
+              onPressed: _hideBanner,
+            ),
+            Row(
+              children: [
+                FlatButton(
+                  child: Text("RETRY"),
+                  onPressed: () {
+                    _search();
+                    _hideBanner();
+                  },
+                ),
+                FlatButton(
+                  child: Text("CONTINUE"),
+                  onPressed: () {
+                    _bannerAction();
+                    _hideBanner();
+                  },
+                )
+              ],
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+
   Widget _mainBody() {
     return SlidingUpPanel(
       body: Padding(
-        padding:
-            EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top, 0, 48),
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: _imageViewer(),
-        ),
-      ),
+          padding:
+              EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top, 0, 48),
+          child: Stack(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                child: _imageViewer(),
+              ),
+              (_showBanner) ? _banner() : SizedBox(),
+            ],
+          )),
       backdropEnabled: true,
       controller: _panelController,
       onPanelClosed: () {
@@ -861,24 +906,17 @@ class _HomePageState extends State<HomePage> {
     if (_expandedTileController.isExpanded) {
       _panelController.open();
     }
+  }
 
-    /*if (!_expandedTileController.isExpanded && !(_isAllDB ?? true)) {
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text("Must select one"),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: "Select All",
-          onPressed: () {
-            setState(() {
-              SharedPreferencesUtils.setAllDB(true);
-              _isAllDB = true;
-              _sauceNaoDBMask.updateAll((key, value) => '1');
-            });
-          },
-        ),
-      ));
-      _expandedTileController.expand();
-    }*/
+  _showSnackBar(String msg,
+      {SnackBarAction act, Duration dur = const Duration(seconds: 2)}) {
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
+      content: Text("$msg"),
+      behavior: SnackBarBehavior.floating,
+      action: act,
+      duration: dur,
+    ));
   }
 
   bool _isAllDBBox() {
@@ -887,6 +925,12 @@ class _HomePageState extends State<HomePage> {
             ? false
             : null)
         : true);
+  }
+
+  _hideBanner() {
+    setState(() {
+      _showBanner = false;
+    });
   }
 
   void _initOptions() async {
