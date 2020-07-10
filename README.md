@@ -9,6 +9,7 @@ TODO:
 * [ ] Implement on-the-air update (auto-updater)
 * [ ] App's logo
 * [ ] App's about page
+* [ ] Search's history
 
 ## Getting Started
 
