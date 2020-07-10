@@ -7,6 +7,8 @@ TODO:
 * [ ] More configurations in Options
 * [ ] Add tooltip to explain each of options
 * [ ] Implement on-the-air update (auto-updater)
+* [ ] App's logo
+* [ ] App's about page
 
 ## Getting Started
 
