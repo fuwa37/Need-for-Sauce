@@ -10,6 +10,7 @@ TODO:
 * [ ] App's logo
 * [ ] App's about page
 * [ ] Search's history
+* [ ] Better state management
 
 ## Getting Started
 
