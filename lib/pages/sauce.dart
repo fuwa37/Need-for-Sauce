@@ -32,7 +32,7 @@ class SauceDescState extends State<SauceDesc> {
         videoPlayerController: _videoPlayerController,
         aspectRatio: _videoPlayerController.value.aspectRatio,
         autoPlay: false,
-        looping: false,
+        looping: true,
       );
     });
   }
@@ -115,19 +115,25 @@ class SauceDescState extends State<SauceDesc> {
         : Scaffold(
             appBar: AppBar(
               title: (widget?.sauce?.sauceStatus ?? true)
-                  ? Text(widget.sauce.title, softWrap: true,)
+                  ? Text(
+                      widget.sauce.title,
+                      softWrap: true,
+                    )
                   : null,
+              actions: [
+                IconButton(
+                  tooltip: "Share",
+                  onPressed: () {
+                    Share.share(widget.sauce.reply);
+                  },
+                  icon: Icon(Icons.share),
+                )
+              ],
             ),
             body: SingleChildScrollView(
               child: sauceResult(),
             ),
-            floatingActionButton: FloatingActionButton(
-              heroTag: null,
-              onPressed: () {
-                Share.share(widget.sauce.reply);
-              },
-              child: Icon(Icons.share),
-            ));
+          );
   }
 
   @override

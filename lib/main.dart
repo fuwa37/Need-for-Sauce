@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_html/style.dart';
 import 'package:need_for_sauce/pages/editors/image_editor.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:need_for_sauce/models/models.dart';
@@ -15,7 +16,7 @@ import 'package:need_for_sauce/pages/sauce.dart';
 import 'package:need_for_sauce/pages/editors/video_capture.dart';
 import 'package:need_for_sauce/common/shared_preferences_helper.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:need_for_sauce/pages/about.dart';
+import 'package:need_for_sauce/pages/editors/gif_capture.dart';
 import 'package:path/path.dart' as path;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:dio/dio.dart';
@@ -27,6 +28,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_expanded_tile/flutter_expanded_tile.dart';
 import 'package:flutter_expanded_tile/tileController.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -55,11 +58,10 @@ class _HomePageState extends State<HomePage> {
   TextEditingController _urlController = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   PanelController _panelController = PanelController();
+  ScrollController _searchEngineScrollController = ScrollController();
   ExpandedTileController _expandedTileController = ExpandedTileController();
   dynamic _image;
   CancelToken token;
-  bool _isImageLoaded = false;
-  bool _isLoadingHead;
   bool _isAllDB = true;
   SearchOption _searchOption;
   bool _getAddInfo;
@@ -67,8 +69,10 @@ class _HomePageState extends State<HomePage> {
   bool _showBanner = false;
   String _bannerMessage = '';
   Function() _bannerAction;
+  ValueNotifier<bool> _isFailedtoLoad = ValueNotifier(false);
+  BuildContext _dialogContext;
 
-  Future _getMedia({File videoIntent}) async {
+  _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
     print(await Permission.storage.request());
 
@@ -77,9 +81,22 @@ class _HomePageState extends State<HomePage> {
     var fileType = lookupMimeType(media.path).split('/');
 
     if (fileType[0] == 'image') {
-      setState(() {
-        _image = media;
-      });
+      Uint8List result;
+      if (fileType[1] == 'gif') {
+        result =
+            await Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return GifCapture(media);
+        }));
+
+        if (result == null) _getMedia();
+        setState(() {
+          _image = result;
+        });
+      } else {
+        setState(() {
+          _image = media;
+        });
+      }
     } else if (fileType[0] == 'video') {
       Uint8List result =
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -95,7 +112,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future _editImage() async {
+  _editImage() async {
     Uint8List result =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {
       return ImageEditor(_image);
@@ -111,41 +128,77 @@ class _HomePageState extends State<HomePage> {
 
   _checkURLContentType(url) async {
     Response r;
-
-    setState(() {
-      _isLoadingHead = true;
-    });
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        _dialogContext = context;
+        return WillPopScope(
+          onWillPop: () {
+            try {
+              token.cancel("Back Button");
+            } on Exception catch (e) {
+              print(e);
+            }
+            return Future.value(true);
+          },
+          child: AlertDialog(
+            title: ListTile(
+                leading: CircularProgressIndicator(),
+                title: Text("Loading..."),
+                subtitle: Text("Press BACK to cancel")),
+          ),
+        );
+      },
+    );
     try {
-      r = await Dio()
-          .head(url, options: Options(sendTimeout: 1000, receiveTimeout: 1000));
+      token = CancelToken();
+      r = await Dio().head(url,
+          options: Options(sendTimeout: 1000, receiveTimeout: 1000),
+          cancelToken: token);
     } on DioError catch (e) {
       print(e);
-      setState(() {
-        _isLoadingHead = false;
-      });
+      Navigator.pop(_dialogContext);
+      _dialogContext = null;
       return;
     }
     Headers headers = r.headers;
     String _type = headers['content-type'][0];
+    if (_dialogContext != null) {
+      Navigator.pop(_dialogContext);
+      _dialogContext = null;
+    }
     if (_type.split('/')[0] == 'image') {
-      setState(() {
-        _isLoadingHead = false;
-        _image = url;
-      });
+      Uint8List result;
+      if (_type.split('/')[1] == 'gif') {
+        result =
+            await Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return GifCapture(url);
+        }));
+
+        if (result == null) _getMedia();
+        setState(() {
+          _image = result;
+        });
+      } else {
+        setState(() {
+          _image = url;
+        });
+      }
     } else if (_type.split('/')[0] == 'video') {
       Uint8List result =
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
         return VideoCapture(url);
       }));
+      if (_dialogContext != null) {
+        Navigator.pop(_dialogContext);
+        _dialogContext = null;
+      }
       setState(() {
-        _isLoadingHead = false;
         _image = result;
       });
     } else {
       print("Not image/video");
-      setState(() {
-        _isLoadingHead = false;
-      });
       return;
     }
   }
@@ -365,12 +418,11 @@ class _HomePageState extends State<HomePage> {
       case SearchOption.SauceNao:
         {
           if (_isAllDB != false) {
-            BuildContext dialogContext;
             showDialog(
               context: context,
               barrierDismissible: false,
               builder: (BuildContext context) {
-                dialogContext = context;
+                _dialogContext = context;
                 return WillPopScope(
                   onWillPop: () {
                     try {
@@ -382,9 +434,9 @@ class _HomePageState extends State<HomePage> {
                   },
                   child: AlertDialog(
                     title: ListTile(
-                      leading: CircularProgressIndicator(),
-                      title: Text("Loading..."),
-                    ),
+                        leading: CircularProgressIndicator(),
+                        title: Text("Loading..."),
+                        subtitle: Text("Press BACK to cancel")),
                   ),
                 );
               },
@@ -402,19 +454,21 @@ class _HomePageState extends State<HomePage> {
                       sauce.data = await data.withInfo();
                     } on NoInfoException catch (e) {
                       print(e);
-                      Navigator.pop(dialogContext);
+                      Navigator.pop(_dialogContext);
+                      _dialogContext = null;
                       setState(() {
                         _showBanner = true;
                         _bannerMessage = e.toString();
                         _bannerAction = () => Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                          return SauceDesc(SauceObject.fromSauceNao(
-                              sauce.header, sauce.data));
-                        }));
+                                MaterialPageRoute(builder: (context) {
+                              return SauceDesc(SauceObject.fromSauceNao(
+                                  sauce.header, sauce.data));
+                            }));
                       });
                     }
                   } else {
-                    Navigator.pop(dialogContext);
+                    Navigator.pop(_dialogContext);
+                    _dialogContext = null;
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                       return SauceDesc(
@@ -422,7 +476,8 @@ class _HomePageState extends State<HomePage> {
                     }));
                   }
                 } else {
-                  Navigator.pop(dialogContext);
+                  Navigator.pop(_dialogContext);
+                  _dialogContext = null;
                   print("No Sauce");
                   print(
                       "Status: ${sauces.header.status}\nMessage: ${sauces.header.message}");
@@ -431,11 +486,12 @@ class _HomePageState extends State<HomePage> {
                 throw Exception("Response null");
               }
             } on Exception catch (e) {
-              Navigator.pop(dialogContext);
+              Navigator.pop(_dialogContext);
+              _dialogContext = null;
               print(e);
             }
           } else {
-            _showSnackBar("Select at least one database",
+            _showSnackBar("Select at least one index",
                 act: SnackBarAction(
                   label: "DISMISS",
                   onPressed: () {
@@ -449,12 +505,11 @@ class _HomePageState extends State<HomePage> {
         }
       case SearchOption.Trace:
         {
-          BuildContext dialogContext;
           showDialog(
             context: context,
             barrierDismissible: false,
             builder: (BuildContext context) {
-              dialogContext = context;
+              _dialogContext = context;
               return WillPopScope(
                 onWillPop: () {
                   try {
@@ -466,9 +521,9 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: AlertDialog(
                   title: ListTile(
-                    leading: CircularProgressIndicator(),
-                    title: Text("Loading..."),
-                  ),
+                      leading: CircularProgressIndicator(),
+                      title: Text("Loading..."),
+                      subtitle: Text("Press BACK to cancel")),
                 ),
               );
             },
@@ -482,25 +537,29 @@ class _HomePageState extends State<HomePage> {
                 var sauce = sauces.docs[0];
                 if (_getAddInfo) {
                   sauce = await sauce.withInfo();
-                  Navigator.pop(dialogContext);
+                  Navigator.pop(_dialogContext);
+                  _dialogContext = null;
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 } else {
-                  Navigator.pop(dialogContext);
+                  Navigator.pop(_dialogContext);
+                  _dialogContext = null;
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 }
               } else {
-                Navigator.pop(dialogContext);
+                Navigator.pop(_dialogContext);
+                _dialogContext = null;
                 print("No Sauce");
               }
             } else {
               throw Exception("Response null");
             }
           } on Exception catch (e) {
-            Navigator.pop(dialogContext);
+            Navigator.pop(_dialogContext);
+            _dialogContext = null;
             print(e);
           }
           break;
@@ -514,8 +573,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  _loadFailed(bool val) async {
+    await Future.delayed(Duration.zero);
+    if (_dialogContext != null) {
+      Navigator.pop(_dialogContext);
+      _dialogContext = null;
+    }
+    _isFailedtoLoad.value = val;
+  }
+
   Widget _imageLoad() {
-    _isImageLoaded = false;
     var _eImage = ExtendedImage(
       image: imageProvider(_image),
       fit: BoxFit.contain,
@@ -523,16 +590,36 @@ class _HomePageState extends State<HomePage> {
       height: double.infinity,
       mode: ExtendedImageMode.none,
       enableLoadState: true,
-    );
-
-    _eImage.image.resolve(ImageConfiguration()).addListener(
-      ImageStreamListener(
-        (info, call) {
-          setState(() {
-            _isImageLoaded = true;
-          });
-        },
-      ),
+      loadStateChanged: (ExtendedImageState state) {
+        switch (state.extendedImageLoadState) {
+          case LoadState.loading:
+            {
+              return Center(child: CircularProgressIndicator());
+            }
+          case LoadState.completed:
+            {
+              _loadFailed(false);
+              return ExtendedRawImage(
+                image: state.extendedImageInfo?.image,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+              );
+            }
+          case LoadState.failed:
+            {
+              print("failed");
+              _loadFailed(true);
+              return Center(
+                child: Text("Failed to load image"),
+              );
+            }
+          default:
+            {
+              return Text("Failed");
+            }
+        }
+      },
     );
 
     return _eImage;
@@ -540,55 +627,69 @@ class _HomePageState extends State<HomePage> {
 
   Widget _imageViewer() {
     return (_image == null)
-        ? (_isLoadingHead ?? false)
-            ? Center(
-                child: CircularProgressIndicator(),
-              )
-            : Center(
-                child: Text(
-                  'No media selected',
-                ),
-              )
+        ? Center(
+            child: Text(
+              'No media selected',
+            ),
+          )
         : _imageLoad();
   }
 
   Widget _menuButtons() {
-    return FloatingActionButton(
-      heroTag: null,
-      child: (_isImageLoaded) ? Icon(Icons.search) : Icon(Icons.add),
-      onPressed: (_isImageLoaded)
-          ? () {
-              _panelController.close();
-              _search();
-            }
-          : () {
-              showModalBottomSheet(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Wrap(
-                      children: [
-                        ListTile(
-                          leading: Icon(Icons.perm_media),
-                          title: Text("Open Gallery"),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _panelController.close();
-                            _getMedia();
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.insert_link),
-                          title: Text("Pick URL"),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _panelController.close();
-                            _pickURL();
-                          },
-                        )
-                      ],
-                    );
-                  });
-            },
+    return ValueListenableBuilder(
+      valueListenable: _isFailedtoLoad,
+      builder: (context, isFailed, child) {
+        return FloatingActionButton(
+          tooltip: (_image != null && !isFailed) ? "Search" : "Pick",
+          heroTag: null,
+          child: (_image != null && !isFailed)
+              ? Icon(Icons.search)
+              : Icon(Icons.add),
+          onPressed: (_image != null && !isFailed)
+              ? () {
+                  _panelController.close();
+                  _search();
+                }
+              : () {
+                  showModalBottomSheet(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return Wrap(
+                          children: [
+                            ListTile(
+                              leading: Icon(Icons.perm_media),
+                              title: Text("Pick Media (Image/Video)"),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _panelController.close();
+                                if (_isFailedtoLoad.value) {
+                                  setState(() {
+                                    _image = null;
+                                  });
+                                }
+                                _getMedia();
+                              },
+                            ),
+                            ListTile(
+                              leading: Icon(Icons.insert_link),
+                              title: Text("Pick from URL (Image/Video)"),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _panelController.close();
+                                if (_isFailedtoLoad.value) {
+                                  setState(() {
+                                    _image = null;
+                                  });
+                                }
+                                _pickURL();
+                              },
+                            )
+                          ],
+                        );
+                      });
+                },
+        );
+      },
     );
   }
 
@@ -638,6 +739,61 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  _searchEngineHelp() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Scrollbar(
+              isAlwaysShown: true,
+              controller: _searchEngineScrollController,
+              child: Container(
+                height: MediaQuery.of(context).size.height / 4,
+                child: SingleChildScrollView(
+                  controller: _searchEngineScrollController,
+                  child: MediaQuery(
+                      data: MediaQueryData(textScaleFactor: 1),
+                      child: Html(
+                        shrinkWrap: true,
+                        data: """
+                        <p><a href='https://www.saucenao.com'><b>SauceNAO</b></a>: search engine for manga, artwork, movie/tv series, anime, and many more. Pick SauceNAO and refer to index option for what this app provides.
+                        <p>Uncheck box to filter out search result or to have more precise source (i.e. Danbooru/Gelbooru).
+                        <p>Refer to <a href='https://saucenao.com/status.html'>Indexing Status</a> for why some indexes have not option in this app.</p>
+                        <p>For more information: <a href='https://saucenao.com/about.html'>About SauceNAO</a></p>
+                        <hr>
+                        <p><a href='https://trace.moe/'><b>Trace</b></a>: Trace or WAIT(What Anime Is This?) is search engine for anime. Performs relatively better for searching anime and will return short video.
+                        <p>For more information: <a href='https://trace.moe/about'>About Trace(WAIT)</a></p>
+                        <hr>
+                        <p>Please use original/un-cropped media(or use cropped if consist of multiple images) for better result.
+                        </br>Use editing tools provided by this app or external editing app to edit the image.</p>
+                        <p>For general idea of a proper image, regardless of search engine, please refer to <a href='https://trace.moe/faq'>Trace FAQ</a>
+                        (Why I can't find the search result?) and adjust accordingly</p>
+                        """,
+                        onLinkTap: (url) {
+                          print(url);
+                          launch(url);
+                        },
+                        style: {
+                          'p': Style(
+                              fontSize: FontSize(
+                                  14 * MediaQuery.of(context).textScaleFactor))
+                        },
+                      )),
+                ),
+              ),
+            ),
+            actions: [
+              FlatButton(
+                child: Text("CLOSE"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          );
+        });
+  }
+
   Widget _mainBody() {
     return SlidingUpPanel(
       body: Padding(
@@ -680,15 +836,15 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              MaterialButton(
-                shape: CircleBorder(),
-                onPressed: () {
-                  /*Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return AboutPage();
-                  }));*/
-                },
-                child: Icon(Icons.info_outline),
-              ),
+              // MaterialButton(
+              //   shape: CircleBorder(),
+              //   onPressed: () {
+              //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+              //       return AboutPage();
+              //     }));
+              //   },
+              //   child: Icon(Icons.info_outline),
+              // ),
             ],
           )),
       renderPanelSheet: true,
@@ -699,6 +855,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               Container(
                   child: SwitchListTile(
+                    contentPadding: EdgeInsets.fromLTRB(16, 0, 0, 0),
                 value: _getAddInfo ?? false,
                 onChanged: (val) {
                   setState(() {
@@ -712,49 +869,61 @@ class _HomePageState extends State<HomePage> {
                 ),
               )),
               Container(
-                padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: ListTile(
-                        title: Text("Sauce API"),
+                      child: Text(
+                        "Search Engine",
+                        style: Theme.of(context).textTheme.subtitle1,
                       ),
                     ),
                     Flexible(
-                      child: DropdownButton<SearchOption>(
-                        underline: Container(
-                          height: 2,
-                          color: Colors.blue,
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Flexible(
+                          child: IconButton(
+                            color: Colors.black45,
+                            icon: Icon(Icons.info),
+                            onPressed: () {
+                              _searchEngineHelp();
+                            },
+                          ),
                         ),
-                        value: _searchOption,
-                        onChanged: (val) {
-                          SharedPreferencesUtils.setSourceOption(val);
-                          setState(() {
-                            _searchOption = val;
-                            if (val == SearchOption.SauceNao) {
-                              _expandedTileController =
-                                  ExpandedTileController();
-                              _expandedTileController
-                                  .addListener(_expansionTileListener);
-                            } else {
-                              _expandedTileController = null;
-                            }
-                          });
-                        },
-                        items: [
-                          DropdownMenuItem<SearchOption>(
-                            value: SearchOption.SauceNao,
-                            child: Text(
-                                "${searchOptionValues.reverse[SearchOption.SauceNao]}"),
+                        DropdownButton<SearchOption>(
+                          underline: Container(
+                            height: 2,
+                            color: Colors.blue,
                           ),
-                          DropdownMenuItem<SearchOption>(
-                            value: SearchOption.Trace,
-                            child: Text(
-                                "${searchOptionValues.reverse[SearchOption.Trace]}"),
-                          ),
-                        ],
-                      ),
+                          value: _searchOption,
+                          onChanged: (val) {
+                            SharedPreferencesUtils.setSourceOption(val);
+                            setState(() {
+                              _searchOption = val;
+                              if (val == SearchOption.SauceNao) {
+                                _expandedTileController =
+                                    ExpandedTileController();
+                                _expandedTileController
+                                    .addListener(_expansionTileListener);
+                              } else {
+                                _expandedTileController = null;
+                              }
+                            });
+                          },
+                          items: [
+                            DropdownMenuItem<SearchOption>(
+                              value: SearchOption.SauceNao,
+                              child: Text(
+                                  "${searchOptionValues.reverse[SearchOption.SauceNao]}"),
+                            ),
+                            DropdownMenuItem<SearchOption>(
+                              value: SearchOption.Trace,
+                              child: Text(
+                                  "${searchOptionValues.reverse[SearchOption.Trace]}"),
+                            ),
+                          ],
+                        ),
+                      ]),
                     ),
                   ],
                 ),
@@ -781,7 +950,7 @@ class _HomePageState extends State<HomePage> {
                         value: _isAllDB,
                       ),
                       controller: _expandedTileController,
-                      title: Text("SauceNAO Databases"),
+                      title: Text("SauceNAO Indexes"),
                       content: Wrap(
                         children: _sauceNaoDBMask.entries.map((e) {
                           var _widthConstraint =
@@ -859,43 +1028,46 @@ class _HomePageState extends State<HomePage> {
           Container(
             height: 48,
             width: MediaQuery.of(context).size.width / 2 - 42,
-            child: (_isImageLoaded)
-                ? Row(
-                    children: [
-                      Flexible(
-                        child: FlatButton(
-                          child: Container(
-                            height: 48,
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.red,
-                            ),
+            child: ValueListenableBuilder(
+                valueListenable: _isFailedtoLoad,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: FlatButton(
+                        child: Container(
+                          height: 48,
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.red,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _image = null;
-                              _isImageLoaded = false;
-                            });
-                          },
                         ),
+                        onPressed: () {
+                          _loadFailed(false);
+                          setState(() {
+                            _image = null;
+                          });
+                        },
                       ),
-                      Flexible(
-                        child: FlatButton(
-                          child: Container(
-                            height: 48,
-                            child: Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                            ),
+                    ),
+                    Flexible(
+                      child: FlatButton(
+                        child: Container(
+                          height: 48,
+                          child: Icon(
+                            Icons.edit,
+                            color: Colors.white,
                           ),
-                          onPressed: () {
-                            _editImage();
-                          },
                         ),
+                        onPressed: () {
+                          _editImage();
+                        },
                       ),
-                    ],
-                  )
-                : SizedBox(),
+                    ),
+                  ],
+                ),
+                builder: (context, isFailed, child) {
+                  return (_image == null || isFailed) ? SizedBox() : child;
+                }),
           )
         ],
       ),

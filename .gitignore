@@ -11,6 +11,7 @@
 key.properties
 local.properties
 *.apk
+.vscode/
 
 # IntelliJ related
 *.iml

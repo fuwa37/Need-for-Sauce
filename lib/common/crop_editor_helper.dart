@@ -166,6 +166,8 @@ Future<Uint8List> cropImageDataWithNativeLibrary(
 
   if (action.hasRotateAngle) option.addOption(RotateOption(rotateAngle));
 
+  if (PngDecoder().isValidFile(img)) option.outputFormat = OutputFormat.png();
+
   final result = await ImageEditor.editImage(
     image: img,
     imageEditorOption: option,

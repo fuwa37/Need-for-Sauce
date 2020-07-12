@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:need_for_sauce/pages/editors/video_control.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
 import 'dart:io';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:cached_video_player/cached_video_player.dart';
 
 class VideoCapture extends StatefulWidget {
   final _video;
@@ -18,12 +17,10 @@ class VideoCapture extends StatefulWidget {
 
 class _VideoCaptureState extends State<VideoCapture>
     with TickerProviderStateMixin {
-  ChewieController _chewieController;
-  VideoPlayerController _videoPlayerController;
+  CachedVideoPlayerController _videoPlayerController;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   double value = 0;
   Duration _currentVideoPosition;
-  AnimationController _cutBAnimationController;
-  Animation<double> _cutBAnimation;
 
   void _videoListener() async {
     setState(() {
@@ -32,7 +29,29 @@ class _VideoCaptureState extends State<VideoCapture>
   }
 
   _getThumbnail() async {
+    BuildContext _dialogContext;
     var thumb;
+
+    showDialog(
+      context: _scaffoldKey.currentContext,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        _dialogContext = context;
+        return WillPopScope(
+          onWillPop: () {
+            _dialogContext = null;
+            return Future.value(true);
+          },
+          child: AlertDialog(
+            title: ListTile(
+              leading: CircularProgressIndicator(),
+              title: Text("Loading..."),
+              subtitle: Text("Press BACK to cancel"),
+            ),
+          ),
+        );
+      },
+    );
 
     try {
       thumb = await VideoThumbnail.thumbnailData(
@@ -51,53 +70,38 @@ class _VideoCaptureState extends State<VideoCapture>
       );
     }
 
+    if (thumb == null) return;
+    
+    if (_dialogContext != null) {
+      Navigator.pop(_dialogContext);
     Navigator.pop(context, thumb);
-  }
-
-  _initVideoPlayer() async {
-    await _videoPlayerController.initialize();
-    setState(() {
-      _chewieController = ChewieController(
-          videoPlayerController: _videoPlayerController,
-          aspectRatio: _videoPlayerController.value.aspectRatio,
-          autoPlay: false,
-          showControls: false,
-          errorBuilder: (context, error) {
-            return Center(
-              child: Text(error),
-            );
-          },
-          placeholder: Center(
-            child: CircularProgressIndicator(),
-          ));
-      _videoPlayerController.addListener(_videoListener);
-      _currentVideoPosition = _videoPlayerController.value.position;
-    });
+    }
   }
 
   @override
   void initState() {
     super.initState();
 
-    _cutBAnimationController = AnimationController(
-        duration: const Duration(milliseconds: 150), vsync: this, value: 1);
-    _cutBAnimation =
-        CurvedAnimation(parent: _cutBAnimationController, curve: Curves.linear);
-
     if (widget._video is File) {
       print("file");
-      _videoPlayerController = VideoPlayerController.file(widget._video);
+      _videoPlayerController = CachedVideoPlayerController.file(widget._video);
     } else if (widget._video is String) {
       print("Url");
-      _videoPlayerController = VideoPlayerController.network(widget._video);
+      _videoPlayerController =
+          CachedVideoPlayerController.network(widget._video);
     }
     _videoPlayerController.setVolume(0);
-    _initVideoPlayer();
+    _videoPlayerController.initialize();
+    setState(() {
+      _videoPlayerController.addListener(_videoListener);
+      _currentVideoPosition = _videoPlayerController.value.position;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
         backgroundColor: Colors.white.withOpacity(0.5),
         bottomNavigationBar: BottomAppBar(
           color: Colors.blue,
@@ -107,19 +111,23 @@ class _VideoCaptureState extends State<VideoCapture>
               children: [
                 IconButton(
                   color: Colors.white,
-                  onPressed: () {
-                    setState(() {
-                      if (_videoPlayerController.value.isPlaying) {
-                        _chewieController.pause();
-                      } else {
-                        if (_videoPlayerController.value.position ==
-                            _videoPlayerController.value.duration) {
-                          _chewieController.seekTo(Duration(milliseconds: 0));
+                  onPressed: (_videoPlayerController.value != null &&
+                          _videoPlayerController.value.initialized)
+                      ? () {
+                          setState(() {
+                            if (_videoPlayerController.value.isPlaying) {
+                              _videoPlayerController.pause();
+                            } else {
+                              if (_videoPlayerController.value.position ==
+                                  _videoPlayerController.value.duration) {
+                                _videoPlayerController
+                                    .seekTo(Duration(milliseconds: 0));
+                              }
+                              _videoPlayerController.play();
+                            }
+                          });
                         }
-                        _chewieController.play();
-                      }
-                    });
-                  },
+                      : null,
                   icon: Icon(
                     _videoPlayerController.value.isPlaying
                         ? Icons.pause
@@ -129,15 +137,18 @@ class _VideoCaptureState extends State<VideoCapture>
                       _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
                 ),
                 IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if (_videoPlayerController.value.volume == 0) {
-                        _videoPlayerController.setVolume(100);
-                      } else {
-                        _videoPlayerController.setVolume(0);
-                      }
-                    });
-                  },
+                  onPressed: (_videoPlayerController.value != null &&
+                          _videoPlayerController.value.initialized)
+                      ? () {
+                          setState(() {
+                            if (_videoPlayerController.value.volume == 0) {
+                              _videoPlayerController.setVolume(100);
+                            } else {
+                              _videoPlayerController.setVolume(0);
+                            }
+                          });
+                        }
+                      : null,
                   icon: Icon(
                     _videoPlayerController.value.volume == 0
                         ? Icons.volume_off
@@ -171,11 +182,9 @@ class _VideoCaptureState extends State<VideoCapture>
             ),
           ),
         ),
-        body: (_chewieController == null)
-            ? Center(
-                child: CircularProgressIndicator(),
-              )
-            : Padding(
+        body: (_videoPlayerController.value != null &&
+                _videoPlayerController.value.initialized)
+            ? Padding(
                 padding: EdgeInsets.fromLTRB(
                     0, MediaQuery.of(context).padding.top, 0, 0),
                 child: Stack(
@@ -183,8 +192,13 @@ class _VideoCaptureState extends State<VideoCapture>
                     Container(
                       height: MediaQuery.of(context).size.height -
                           (MediaQuery.of(context).padding.bottom),
-                      child: Chewie(
-                        controller: _chewieController,
+                      child: Center(
+                        child: AspectRatio(
+                          child: CachedVideoPlayer(
+                            _videoPlayerController,
+                          ),
+                          aspectRatio: _videoPlayerController.value.aspectRatio,
+                        ),
                       ),
                     ),
                     Container(
@@ -207,10 +221,12 @@ class _VideoCaptureState extends State<VideoCapture>
                             onPressed: () {
                               Navigator.pop(context);
                             },
+                            tooltip: "Back",
                           ),
                           IconButton(
+                            tooltip: "Done",
                             icon: Icon(
-                              Icons.content_cut,
+                              Icons.done,
                               color: Colors.white,
                             ),
                             onPressed: () {
@@ -222,12 +238,14 @@ class _VideoCaptureState extends State<VideoCapture>
                     ),
                   ],
                 ),
+              )
+            : Center(
+                child: CircularProgressIndicator(),
               ));
   }
 
   @override
   void dispose() {
-    _chewieController.dispose();
     _videoPlayerController.dispose();
     super.dispose();
   }

@@ -1,3 +1,7 @@
+## edit
+
+* Fix receive sharing media from android's default file manager not properly received (Detected on API 28)
+
 ## 1.4.0
 
 * Added support for sharing any type of file

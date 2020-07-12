@@ -268,6 +268,7 @@ class _ImageEditorState extends State<ImageEditor> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         IconButton(
+          tooltip: "Back",
           icon: Icon(
             Icons.arrow_back,
             color: Colors.white,
@@ -277,8 +278,9 @@ class _ImageEditorState extends State<ImageEditor> {
           },
         ),
         IconButton(
+          tooltip: "Done",
           icon: Icon(
-            Icons.check,
+            Icons.done,
             color: Colors.white,
           ),
           onPressed: () {
