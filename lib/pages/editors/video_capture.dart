@@ -20,12 +20,10 @@ class _VideoCaptureState extends State<VideoCapture>
   CachedVideoPlayerController _videoPlayerController;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   double value = 0;
-  Duration _currentVideoPosition;
+  Future<void> _init;
 
   void _videoListener() async {
-    setState(() {
-      _currentVideoPosition = _videoPlayerController.value.position;
-    });
+    setState(() {});
   }
 
   _getThumbnail() async {
@@ -57,7 +55,7 @@ class _VideoCaptureState extends State<VideoCapture>
       thumb = await VideoThumbnail.thumbnailData(
         video: widget._video.path,
         imageFormat: ImageFormat.JPEG,
-        timeMs: _currentVideoPosition.inMilliseconds,
+        timeMs: _videoPlayerController.value.position.inMilliseconds,
         quality: 100,
       );
     } on NoSuchMethodError catch (e) {
@@ -65,23 +63,20 @@ class _VideoCaptureState extends State<VideoCapture>
       thumb = await VideoThumbnail.thumbnailData(
         video: widget._video,
         imageFormat: ImageFormat.JPEG,
-        timeMs: _currentVideoPosition.inMilliseconds,
+        timeMs: _videoPlayerController.value.position.inMilliseconds,
         quality: 100,
       );
     }
 
     if (thumb == null) return;
-    
+
     if (_dialogContext != null) {
       Navigator.pop(_dialogContext);
-    Navigator.pop(context, thumb);
+      Navigator.pop(context, thumb);
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-
+  Future<void> _initVideo() async {
     if (widget._video is File) {
       print("file");
       _videoPlayerController = CachedVideoPlayerController.file(widget._video);
@@ -91,29 +86,28 @@ class _VideoCaptureState extends State<VideoCapture>
           CachedVideoPlayerController.network(widget._video);
     }
     _videoPlayerController.setVolume(0);
-    _videoPlayerController.initialize();
-    setState(() {
-      _videoPlayerController.addListener(_videoListener);
-      _currentVideoPosition = _videoPlayerController.value.position;
-    });
+    await _videoPlayerController.initialize();
+    _videoPlayerController.addListener(_videoListener);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-        backgroundColor: Colors.white.withOpacity(0.5),
-        bottomNavigationBar: BottomAppBar(
-          color: Colors.blue,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
-            child: Row(
-              children: [
-                IconButton(
-                  color: Colors.white,
-                  onPressed: (_videoPlayerController.value != null &&
-                          _videoPlayerController.value.initialized)
-                      ? () {
+  Widget _bab() {
+    return BottomAppBar(
+        color: Colors.blue,
+        child: Container(
+          height: 48,
+          child: FutureBuilder(
+            future: _init,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox();
+              } else {
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        color: Colors.white,
+                        onPressed: () {
                           setState(() {
                             if (_videoPlayerController.value.isPlaying) {
                               _videoPlayerController.pause();
@@ -126,20 +120,18 @@ class _VideoCaptureState extends State<VideoCapture>
                               _videoPlayerController.play();
                             }
                           });
-                        }
-                      : null,
-                  icon: Icon(
-                    _videoPlayerController.value.isPlaying
-                        ? Icons.pause
-                        : Icons.play_arrow,
-                  ),
-                  tooltip:
-                      _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
-                ),
-                IconButton(
-                  onPressed: (_videoPlayerController.value != null &&
-                          _videoPlayerController.value.initialized)
-                      ? () {
+                        },
+                        icon: Icon(
+                          _videoPlayerController.value.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                        ),
+                        tooltip: _videoPlayerController.value.isPlaying
+                            ? 'Pause'
+                            : 'Play',
+                      ),
+                      IconButton(
+                        onPressed: () {
                           setState(() {
                             if (_videoPlayerController.value.volume == 0) {
                               _videoPlayerController.setVolume(100);
@@ -147,101 +139,126 @@ class _VideoCaptureState extends State<VideoCapture>
                               _videoPlayerController.setVolume(0);
                             }
                           });
-                        }
-                      : null,
-                  icon: Icon(
-                    _videoPlayerController.value.volume == 0
-                        ? Icons.volume_off
-                        : Icons.volume_up,
-                  ),
-                  color: Colors.white,
-                  tooltip: "Mute",
-                ),
-                Flexible(
-                  fit: FlexFit.tight,
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                    height: 48,
-                    child: MaterialVideoProgressBar(
-                      _videoPlayerController,
-                      colors: ChewieProgressColors(
-                          playedColor: Colors.white,
-                          handleColor: Colors.white,
-                          bufferedColor: Colors.grey,
-                          backgroundColor: Colors.black),
-                    ),
-                  ),
-                ),
-                Container(
-                  child: Text(
-                    "${formatDuration(_currentVideoPosition ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        body: (_videoPlayerController.value != null &&
-                _videoPlayerController.value.initialized)
-            ? Padding(
-                padding: EdgeInsets.fromLTRB(
-                    0, MediaQuery.of(context).padding.top, 0, 0),
-                child: Stack(
-                  children: [
-                    Container(
-                      height: MediaQuery.of(context).size.height -
-                          (MediaQuery.of(context).padding.bottom),
-                      child: Center(
-                        child: AspectRatio(
-                          child: CachedVideoPlayer(
+                        },
+                        icon: Icon(
+                          _videoPlayerController.value.volume == 0
+                              ? Icons.volume_off
+                              : Icons.volume_up,
+                        ),
+                        color: Colors.white,
+                        tooltip: "Mute",
+                      ),
+                      Flexible(
+                        fit: FlexFit.tight,
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          height: 48,
+                          child: MaterialVideoProgressBar(
                             _videoPlayerController,
+                            colors: ChewieProgressColors(
+                                playedColor: Colors.white,
+                                handleColor: Colors.white,
+                                bufferedColor: Colors.grey,
+                                backgroundColor: Colors.black),
                           ),
-                          aspectRatio: _videoPlayerController.value.aspectRatio,
                         ),
                       ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                            Colors.black.withOpacity(0.25),
-                            Colors.transparent
-                          ])),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          IconButton(
-                            icon: Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            tooltip: "Back",
-                          ),
-                          IconButton(
-                            tooltip: "Done",
-                            icon: Icon(
-                              Icons.done,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              _getThumbnail();
-                            },
-                          )
-                        ],
+                      Container(
+                        child: Text(
+                          "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          ),
+        ));
+  }
+
+  Widget _body() {
+    return FutureBuilder(
+        future: _init,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                  0, MediaQuery.of(context).padding.top, 0, 0),
+              child: Stack(
+                children: [
+                  Container(
+                    height: MediaQuery.of(context).size.height -
+                        (MediaQuery.of(context).padding.bottom),
+                    child: Center(
+                      child: AspectRatio(
+                        child: CachedVideoPlayer(
+                          _videoPlayerController,
+                        ),
+                        aspectRatio: _videoPlayerController.value.aspectRatio,
                       ),
                     ),
-                  ],
-                ),
-              )
-            : Center(
-                child: CircularProgressIndicator(),
-              ));
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                          Colors.black.withOpacity(0.25),
+                          Colors.transparent
+                        ])),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        IconButton(
+                          icon: Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          tooltip: "Back",
+                        ),
+                        IconButton(
+                          tooltip: "Done",
+                          icon: Icon(
+                            Icons.done,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            _getThumbnail();
+                          },
+                        )
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _init = _initVideo();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: Colors.white.withOpacity(0.5),
+        bottomNavigationBar: _bab(),
+        body: _body());
   }
 
   @override

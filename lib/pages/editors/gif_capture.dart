@@ -25,14 +25,12 @@ class GifCaptureState extends State<GifCapture> with TickerProviderStateMixin {
   List<int> _imagesTick = List<int>();
   List<List<int>> _imagesMemory = List<List<int>>();
   int _imageIdx = 0;
-  Stopwatch stopwatch;
   AnimationController _animationController;
   Animation<int> _animation;
   bool _isRepeated = true;
   Future<void> _init;
 
   Future<void> _getGif() async {
-    stopwatch = Stopwatch()..start();
     var gif;
 
     if (widget._gif is String) {

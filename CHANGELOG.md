@@ -1,3 +1,10 @@
+## 0.0.2+1
+
+* Add tooltip for additional information
+* Fix video capture page can't load video
+* Fix video capture page's broken video control
+* Fix some markdown in search result page 
+
 ## 0.0.2
 
 * Add GIF editor, select a frame from a GIF

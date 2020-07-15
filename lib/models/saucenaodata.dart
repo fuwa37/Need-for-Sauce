@@ -590,7 +590,7 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
         creator: snd.creator,
         engName: snd.engName,
         jpName: snd.jpName,
-        page:int.tryParse(
+        page: int.tryParse(
             snh.indexName?.split('-')?.last?.trim()?.split('.')?.first),
       );
 
@@ -899,7 +899,7 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
         "**Alt. Source**": source == null
             ? null
             : Uri.parse(source).isAbsolute
-                ? "(${getHostName(source)})[${getSourceUrl(source)}]"
+                ? "[${getHostName(source)}](${getSourceUrl(source)})"
                 : null,
       };
 }

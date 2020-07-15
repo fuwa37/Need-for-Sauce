@@ -73,6 +73,7 @@ class _VideoProgressBarState extends State<MaterialVideoProgressBar> {
         ),
       ),
       onHorizontalDragStart: (DragStartDetails details) {
+        print(details);
         if (!controller.value.initialized) {
           return;
         }
@@ -96,6 +97,10 @@ class _VideoProgressBarState extends State<MaterialVideoProgressBar> {
         }
       },
       onHorizontalDragEnd: (DragEndDetails details) {
+        if (!controller.value.isPlaying) {
+          controller.pause();
+        }
+
         if (_controllerWasPlaying) {
           controller.play();
         }
@@ -107,6 +112,9 @@ class _VideoProgressBarState extends State<MaterialVideoProgressBar> {
       onTapDown: (TapDownDetails details) {
         if (!controller.value.initialized) {
           return;
+        }
+        if (!controller.value.isPlaying) {
+          controller.pause();
         }
         seekToRelativePosition(details.globalPosition);
       },

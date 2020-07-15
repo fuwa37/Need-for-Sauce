@@ -739,6 +739,52 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  _addInfoHelp() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Scrollbar(
+              isAlwaysShown: true,
+              controller: _searchEngineScrollController,
+              child: Container(
+                height: MediaQuery.of(context).size.height / 4,
+                child: SingleChildScrollView(
+                  controller: _searchEngineScrollController,
+                  child: MediaQuery(
+                      data: MediaQueryData(textScaleFactor: 1),
+                      child: Html(
+                        shrinkWrap: true,
+                        data: """
+                        <p>If switched on, will return available additional information based on search result type (e.g. Anime airing info and description, H-Manga tags).</p>
+                        <p>Not each type of search result has additional information
+                        </br>It will be gradually added in future updates.</p>
+                        """,
+                        onLinkTap: (url) {
+                          print(url);
+                          launch(url);
+                        },
+                        style: {
+                          'p': Style(
+                              fontSize: FontSize(
+                                  14 * MediaQuery.of(context).textScaleFactor))
+                        },
+                      )),
+                ),
+              ),
+            ),
+            actions: [
+              FlatButton(
+                child: Text("CLOSE"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          );
+        });
+  }
+
   _searchEngineHelp() {
     showDialog(
         context: context,
@@ -767,7 +813,7 @@ class _HomePageState extends State<HomePage> {
                         <p>Please use original/un-cropped media(or use cropped if consist of multiple images) for better result.
                         </br>Use editing tools provided by this app or external editing app to edit the image.</p>
                         <p>For general idea of a proper image, regardless of search engine, please refer to <a href='https://trace.moe/faq'>Trace FAQ</a>
-                        (Why I can't find the search result?) and adjust accordingly</p>
+                        (Why I can't find the search result?) and adjust accordingly.</p>
                         """,
                         onLinkTap: (url) {
                           print(url);
@@ -854,20 +900,40 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             children: [
               Container(
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.fromLTRB(16, 0, 0, 0),
-                value: _getAddInfo ?? false,
-                onChanged: (val) {
-                  setState(() {
-                    _getAddInfo = val;
-                    SharedPreferencesUtils.setAddInfo(val);
-                  });
-                },
-                title: Text(
-                  "Get Additional Info",
-                  style: TextStyle(),
-                ),
-              )),
+                  padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "Get Additional Information",
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
+                      ),
+                      Flexible(
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Flexible(
+                            child: IconButton(
+                              color: Colors.black45,
+                              icon: Icon(Icons.info),
+                              onPressed: () {
+                                _addInfoHelp();
+                              },
+                            ),
+                          ),
+                          Switch(
+                            value: _getAddInfo ?? false,
+                            onChanged: (val) {
+                              setState(() {
+                                _getAddInfo = val;
+                                SharedPreferencesUtils.setAddInfo(val);
+                              });
+                            },
+                          )
+                        ]),
+                      ),
+                    ],
+                  )),
               Container(
                 padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Row(
