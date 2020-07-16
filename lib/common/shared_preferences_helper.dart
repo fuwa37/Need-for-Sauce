@@ -43,7 +43,6 @@ const Map<String, dynamic> indexSauceNaoDB = {
 };
 
 String sauceNaoDBMask(Map<String, String> index) {
-  print(index);
   var dbmask = int.parse(
       (index["MangaDex"] +
           (index['index_madokami'] ?? '0') +

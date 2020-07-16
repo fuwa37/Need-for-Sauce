@@ -156,7 +156,7 @@ class TraceDocs {
     return data;
   }
 
-  Map<String, dynamic> toJsonMarkdown() {
+  Map<String, dynamic> toJsonHtml() {
     String info = '';
 
     List<String> out = [
@@ -178,15 +178,15 @@ class TraceDocs {
     });
 
     return {
-      "": "#### $titleNative\n\n$titleRomaji\n\n$titleEnglish\n",
-      "**Season**":
-          date,
-      "**Episode**": episode,
-      "**Time**": "${returnTime(Duration(milliseconds: (at * 1000).toInt()))}",
-      "**Info**": (info?.isNotEmpty ?? false) ? "\n($info)\n" : null,
-      "**Genres**": (genres != null) ? "${genres?.join(', ')}\n" : null,
-      "**Source**": (source != null) ? "$source\n" : null,
-      "**Description**": (description != null) ? "\n$description".replaceAll('<br>', '\n') : null,
+      "": "<h3>$titleNative</br>$titleRomaji</br>$titleEnglish</h3>",
+      "<b>Season</b>": date,
+      "<b>Episode</b>": episode,
+      "<b>Time</b>":
+          "${returnTime(Duration(milliseconds: (at * 1000).toInt()))}",
+      "<b>Info</b>": (info?.isNotEmpty ?? false) ? info : null,
+      "<b>Genres</b>": genres?.join(', '),
+      "<b>Source</b>": source,
+      "<b>Description</b>": description
     };
   }
 

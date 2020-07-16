@@ -3,8 +3,13 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_html/style.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'dart:math' as math;
+
+import 'package:dio/dio.dart';
 
 class FlatButtonWithIcon extends FlatButton with MaterialButtonWithIconMixin {
   FlatButtonWithIcon({
@@ -231,7 +236,8 @@ class InverseNotched extends CustomClipper<Path> {
         Offset(p[3].dx, p[3].dy + this.height),
         radius: Radius.circular(notchRadius),
         clockwise: false,
-      )..quadraticBezierTo(
+      )
+      ..quadraticBezierTo(
           p[1].dx, p[1].dy + this.height, p[2].dx, p[2].dy + this.height)
       ..close();
   }
@@ -247,11 +253,80 @@ class InverseNotched extends CustomClipper<Path> {
 
 class NoInfoException implements Exception {
   String message;
-  
+
   NoInfoException([this.message]);
 
   String toString() {
     if (message == null) return "Exception";
-    return "Couldn't get additional info: $message";
+    return "Couldn't get additional info :$message";
   }
+}
+
+class TooManyRequestException implements Exception {
+  Response res;
+
+  TooManyRequestException([this.res]);
+
+  String toString() {
+    if (res == null) return "Exception";
+    return "${res.statusMessage}";
+  }
+}
+
+class NoResultException implements Exception {
+  String message;
+
+  NoResultException([this.message]);
+
+  String toString() {
+    if (message == null) return "Exception";
+    return "Couldn't get result :$message";
+  }
+}
+
+properImageHelp(BuildContext context, ScrollController _helpController) {
+  showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: Scrollbar(
+            isAlwaysShown: true,
+            controller: _helpController,
+            child: Container(
+              height: MediaQuery.of(context).size.height / 4,
+              child: SingleChildScrollView(
+                controller: _helpController,
+                child: MediaQuery(
+                    data: MediaQueryData(textScaleFactor: 1),
+                    child: Html(
+                      shrinkWrap: true,
+                      data: """
+                        <p>Please use original/un-cropped media(or crop it if consist of multiple images/need to be cropped) for better result.
+                        </br>Use editing tools provided by this app or external editing app to edit the image.</p>
+                        <p>For general idea of a proper image, regardless of search engine, please refer to <a href='https://trace.moe/faq'>Trace FAQ</a>
+                        (Why I can't find the search result?) and adjust accordingly.</p>
+                        """,
+                      onLinkTap: (url) {
+                        print(url);
+                        launch(url);
+                      },
+                      style: {
+                        'p': Style(
+                            fontSize: FontSize(
+                                14 * MediaQuery.of(context).textScaleFactor))
+                      },
+                    )),
+              ),
+            ),
+          ),
+          actions: [
+            FlatButton(
+              child: Text("CLOSE"),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      });
 }

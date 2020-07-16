@@ -35,12 +35,12 @@ class SauceObject {
   SauceObject.fromTrace(TraceDocs trace) {
     var output = '';
 
-    trace.toJsonMarkdown().forEach((key, value) {
+    trace.toJsonHtml().forEach((key, value) {
       if (value != null) {
         if (key.isEmpty) {
-          output += "$value\n";
+          output += "$value";
         } else {
-          output += "$key: $value\n\n";
+          output += "<p>$key : $value</p>";
         }
       }
     });
@@ -75,12 +75,12 @@ class SauceObject {
       SauceNaoResultHeader header, SauceNaoResultDataAbstract data) {
     var output = '';
 
-    data.toJsonMarkdown().forEach((key, value) {
+    data.toJsonHtml().forEach((key, value) {
       if (value != null) {
         if (key.isEmpty) {
-          output += "$value\n";
+          output += "$value";
         } else {
-          output += "$key: $value\n\n";
+          output += "<p>$key : $value</p>";
         }
       }
     });

@@ -1,3 +1,10 @@
+## 0.0.3
+
+* Change Markdown to HTML for several text views
+* Add bunch of error catches
+* Fix loading dialog not show up or can't be closed
+* Clean tags in search result for sharing
+
 ## 0.0.2+1
 
 * Add tooltip for additional information

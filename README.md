@@ -2,7 +2,7 @@
 
 Sauce finder
 
-TODO:
+**TODO:**
 
 * [ ] More configurations in Options
 * [x] ~~Add tooltip to explain each of options~~
@@ -10,4 +10,5 @@ TODO:
 * [ ] App's logo
 * [ ] App's about page
 * [ ] Search's history
-* [ ] Better state management
+* [ ] **Better state management**
+* [ ] **Refactoring**

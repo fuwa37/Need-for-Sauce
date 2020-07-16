@@ -33,13 +33,13 @@ class SauceNaoHeader {
   int longRemaining;
   int shortRemaining;
   int status;
-  int resultsRequested;
+  String resultsRequested;
   Map<String, SauceNaoIndex> index;
   String searchDepth;
   double minimumSimilarity;
   String queryImageDisplay;
   String queryImage;
-  int resultsReturned;
+  String resultsReturned;
   String message;
 
   SauceNaoHeader(
@@ -72,25 +72,27 @@ class SauceNaoHeader {
   }
 
   factory SauceNaoHeader.fromJson(Map<String, dynamic> json) => SauceNaoHeader(
-      userId: json["user_id"].toString(),
-      accountType: json["account_type"].toString(),
+      userId: json["user_id"]?.toString(),
+      accountType: json["account_type"]?.toString(),
       shortLimit: json["short_limit"],
       longLimit: json["long_limit"],
       longRemaining: json["long_remaining"],
       shortRemaining: json["short_remaining"],
       status: json["status"],
-      resultsRequested: (json["results_requested"] is int)
-          ? json["results_requested"]
-          : int.parse(json["results_requested"]),
-      index: Map.from(json["index"]).map((k, v) =>
-          MapEntry<String, SauceNaoIndex>(k, SauceNaoIndex.fromJson(v))),
+      resultsRequested: (json["results_requested"] == null)
+          ? null
+          : json["results_requested"].toString(),
+      index: (json["index"] == null)
+          ? null
+          : Map.from(json["index"]).map((k, v) =>
+              MapEntry<String, SauceNaoIndex>(k, SauceNaoIndex.fromJson(v))),
       searchDepth: json["search_depth"],
-      minimumSimilarity: json["minimum_similarity"].toDouble(),
+      minimumSimilarity: json["minimum_similarity"]?.toDouble(),
       queryImageDisplay: json["query_image_display"],
       queryImage: json["query_image"],
-      resultsReturned: (json["results_returned"] is int)
-          ? json["results_returned"]
-          : int.parse(json["results_returned"]),
+      resultsReturned: (json["results_returned"] == null)
+          ? null
+          : json["results_returned"].toString(),
       message: json["message"]);
 
   Map<String, dynamic> toJson() => {
@@ -102,7 +104,7 @@ class SauceNaoHeader {
         "short_remaining": shortRemaining,
         "status": status,
         "results_requested": resultsRequested,
-        "index": Map.from(index)
+        "index": (index == null) ? null : Map.from(index)
             .map((k, v) => MapEntry<String, dynamic>(k, v.toJson())),
         "search_depth": searchDepth,
         "minimum_similarity": minimumSimilarity,
@@ -363,7 +365,7 @@ abstract class SauceNaoResultDataAbstract {
 
   Map<String, dynamic> toJson();
 
-  Map<String, dynamic> toJsonMarkdown();
+  Map<String, dynamic> toJsonHtml();
 }
 
 class SauceNaoResultData extends SauceNaoResultDataAbstract {
@@ -401,13 +403,13 @@ class SauceNaoResultData extends SauceNaoResultDataAbstract {
         "source": source,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
+  Map<String, dynamic> toJsonHtml() => {
         "": title != null
-            ? "#### $title"
-            : source != null ? "#### $source" : null,
-        "**Link**": extUrls == null
+            ? "<h4>$title</h4>"
+            : source != null ? "<h4>$source</h4>" : null,
+        "<b>Link</b>": extUrls == null
             ? null
-            : "[${Uri.parse(extUrls[0]).host}](${extUrls[0]})"
+            : "<a href=${Uri.parse(extUrls[0]).host}>${extUrls[0]}</a>"
       };
 }
 

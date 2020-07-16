@@ -77,10 +77,10 @@ class SauceNaoPixiv56 extends SauceNaoResultDataAbstract {
         "member_url": memberUrl
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $title",
-        "**Pixiv ID**": "[$pixivId](${extUrls[0]})",
-        "**Member Name**": "[$memberName]($memberUrl)",
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$title</h3>",
+        "<b>Pixiv ID<b>": "<a href=${extUrls[0]}>$pixivId</a>",
+        "<b>Member Name<b>": "<a href=$memberUrl>$memberName</a>",
       };
 }
 
@@ -128,10 +128,10 @@ class SauceNaoDeviantArt34 extends SauceNaoResultDataAbstract {
         "author_url": authorUrl,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $title",
-        "**DeviantArt ID**": "[$daId](${extUrls[0]})",
-        "**Author**": "[$authorName]($authorUrl)",
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$title</h3>",
+        "<b>DeviantArt ID</b>": "<a href=${extUrls[0]}>$daId</a>",
+        "<b>Author</b>": "<a href=$authorUrl>$authorName</a>",
       };
 }
 
@@ -194,10 +194,10 @@ class SauceNaoBcy3132 extends SauceNaoResultDataAbstract {
         "member_url": memberUrl
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $title",
-        "**bcy ID**": "[$bcyId]()",
-        "**Author**": "[$memberName]($memberUrl)",
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$title</h3>",
+        "<b>bcy ID</b>": bcyId,
+        "<b>Author</b>": "<a href=$memberUrl>$memberName</a>",
       };
 }
 
@@ -251,9 +251,9 @@ class SauceNaoPawoo35 extends SauceNaoResultDataAbstract {
         "pawoo_user_display_name": pawooUserDisplayName,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "**Pawoo ID**": "[$pawooId](${extUrls[0]} + /$pawooId)",
-        "**Author**": "$pawooUserDisplayName([@$pawooUserAcct](${extUrls[0]})",
+  Map<String, dynamic> toJsonHtml() => {
+        "<b>Pawoo ID</b>": "<a href=${extUrls[0]}/$pawooId>$pawooId</a>",
+        "<b>Author</b>": "$pawooUserDisplayName(<a href=${extUrls[0]}>@$pawooUserAcct</a>)",
       };
 }
 
@@ -306,11 +306,11 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
         "est_time": estTime,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "## $source",
-        "**Episode**": part,
-        "**Time**": estTime,
-        "**AniDB Link**": "[$anidbAid](${extUrls[0]})"
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$source</h3>",
+        "<b>Episode</b>": part,
+        "<b>Time</b>": estTime,
+        "<b>AniDB Link</b>": "<a href=${extUrls[0]}>$anidbAid</a>"
       };
 }
 
@@ -362,10 +362,10 @@ class SauceNaoNicoSeiga8 extends SauceNaoResultDataAbstract {
         "member_id": memberId,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $title",
-        "**Seiga ID**": "[$seigaId](${extUrls[0]})",
-        "**Member**": "[$memberName]($memberUrl)",
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$title</h3>",
+        "<b>Seiga ID</b>": "<a href=${extUrls[0]}>$seigaId</a>",
+        "<b>Member</b>": "<a href=$memberUrl>$memberName</a>",
       };
 }
 
@@ -414,9 +414,9 @@ class SauceNaoMadokami36 extends SauceNaoResultDataAbstract {
         "type": type,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $part",
-        "**MU Link**": "[$muId](${extUrls[0]})",
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$part</h3>",
+        "<b>MU Link</b>": "<a href=${extUrls[0]}>$muId</a>",
       };
 }
 
@@ -470,11 +470,11 @@ class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
         "est_time": estTime,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $source",
-        "**Episode**": part,
-        "**Time**": estTime,
-        "**IMDB Link**": "[$imdbId](${extUrls[0]})"
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$source</h3>",
+        "<b>Episode</b>": part,
+        "<b>Time</b>": estTime,
+        "<b>IMDB Link</b>": "<a href=${extUrls[0]}>$imdbId</a>"
       };
 }
 
@@ -538,13 +538,13 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
         "author": author,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $source$part",
-        "**Artist**": artist,
-        "**Author**": author,
-        "**Link**": extUrls[0] == null
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$source$part</h3>",
+        "<b>Artist</b>": artist,
+        "<b>Author</b>": author,
+        "<b>Link</b>": extUrls[0] == null
             ? null
-            : "[${getHostName(extUrls[0])}](${extUrls[0]})"
+            : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
 }
 
@@ -607,13 +607,13 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
         "thumbPage": thumbPage,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $source\n\n$engName\n\n$jpName\n",
-        "**ID**": (id == null) ? null : "[#$id](https://nhentai.net/g/$id)",
-        "**Page**": page,
-        "**Creator(s)**": creator?.join(', '),
-        "**Total Pages**": numPages,
-        "**Tag(s)**": tags?.join(', '),
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$source</br>$engName</br>$jpName</h3>",
+        "<b>ID</b>": (id == null) ? null : "<a href=https://nhentai.net/g/$id>#$id</a>",
+        "<b>Page</b>": page,
+        "<b>Creator(s)</b>": creator?.join(', '),
+        "<b>Total Pages</b>": numPages,
+        "<b>Tag(s)</b>": tags?.join(', '),
       };
 
   Future<SauceNaoH18> withInfo() async {
@@ -668,9 +668,9 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
       };
 
   Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $source",
-        "**Creator(s)**": creator,
-        "**Link**": "[${getHostName(extUrls[0])}](${extUrls[0]})",
+        "": "<h3>$source",
+        "<b>Creator(s)<b>": creator,
+        "<b>Link<b>": "[${getHostName(extUrls[0])}](${extUrls[0]})",
       };
 }*/
 
@@ -723,10 +723,10 @@ class SauceNaoNijie11 extends SauceNaoResultDataAbstract {
         "member_url": memberUrl,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $title",
-        "**Nijie ID**": "[$nijieId](${extUrls[0]})",
-        "**Member**": "[$memberName]($memberUrl)",
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$title</h3>",
+        "<b>Nijie ID</b>": "<a href=${extUrls[0]}>$nijieId</a>",
+        "<b>Member</b>": "<a href=$memberUrl>$memberName</a>",
       };
 }
 
@@ -778,10 +778,10 @@ class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
         "member_link": memberLink,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $title",
-        "**Member**": "[$memberName]($memberLink)",
-        "**Link**": url == null ? null : "[${getHostName(url)}]($url)"
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$title</h3>",
+        "<b>Member</b>": "<a href=$memberLink>$memberName</a>",
+        "<b>Link</b>": url == null ? null : "<a href=$url>${getHostName(url)}</a>"
       };
 }
 
@@ -878,28 +878,28 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
     return map;
   }
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "**Yande.re ID**":
-            yandereId == null ? null : "[$yandereId](${extUrls[0]})",
-        "**Danbooru ID**":
-            danbooruId == null ? null : "[$danbooruId](${extUrls[0]})",
-        "**Sankaku ID**":
-            sankakuId == null ? null : "[$sankakuId](${extUrls[0]})",
-        "**Gelbooru ID**":
-            sankakuId == null ? null : "[$gelbooruId](${extUrls[0]})",
-        "**Konachan ID**":
-            konachanId == null ? null : "[$konachanId](${extUrls[0]})",
-        "**Anime-Pictures ID**": apId == null ? null : "[$apId](${extUrls[0]})",
-        "**e621 ID**": e621Id == null ? null : "[$e621Id](${extUrls[0]})",
-        "**Idol Complex ID**":
-            idolId == null ? null : "[$idolId](${extUrls[0]})",
-        "**Creator(s)**": creator,
-        "**Material(s)**": material,
-        "**Character(s)**": characters,
-        "**Alt. Source**": source == null
+  Map<String, dynamic> toJsonHtml() => {
+        "<b>Yande.re ID</b>":
+            yandereId == null ? null : "<a href=${extUrls[0]}>$yandereId</a>",
+        "<b>Danbooru ID</b>":
+            danbooruId == null ? null : "<a href=${extUrls[0]}>$danbooruId</a>",
+        "<b>Sankaku ID</b>":
+            sankakuId == null ? null : "<a href=${extUrls[0]}>$sankakuId</a>",
+        "<b>Gelbooru ID</b>":
+            sankakuId == null ? null : "<a href=${extUrls[0]}>$gelbooruId</a>",
+        "<b>Konachan ID</b>":
+            konachanId == null ? null : "<a href=${extUrls[0]}>$konachanId</a>",
+        "<b>Anime-Pictures ID</b>": apId == null ? null : "<a href=${extUrls[0]}>$apId</a>",
+        "<b>e621 ID</b>": e621Id == null ? null : "<a href=${extUrls[0]}>$e621Id</a>",
+        "<b>Idol Complex ID</b>":
+            idolId == null ? null : "<a href=${extUrls[0]}>$idolId</a>",
+        "<b>Creator(s)</b>": creator,
+        "<b>Material(s)</b>": material,
+        "<b>Character(s)</b>": characters,
+        "<b>Alt. Source</b>": source == null
             ? null
             : Uri.parse(source).isAbsolute
-                ? "[${getHostName(source)}](${getSourceUrl(source)})"
+                ? "<a href=${getHostName(source)}>${getSourceUrl(source)}</a>"
                 : null,
       };
 }
@@ -939,10 +939,12 @@ class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
         "creator": creator,
       };
 
-  Map<String, dynamic> toJsonMarkdown() => {
-        "": "### $source",
-        "**Creator(s)**": creator,
-        "**Link**": "[${getHostName(extUrls[0])}](${extUrls[0]})"
+  Map<String, dynamic> toJsonHtml() => {
+        "": "<h3>$source</h3>",
+        "<b>Creator(s)</b>": creator,
+        "<b>Link</b>": extUrls[0] == null
+            ? null
+            : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
 }
 
@@ -1033,9 +1035,9 @@ class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
       };
 
   Map<String, dynamic> toJsonMarkdown() => {
-        "": title == null ? null : "### $title",
-        "**Company**": company == null ? null : company,
-        "**Getchu ID**": getchuId == null ? null : "[$getchuId]($getchuUrl)",
+        "": title == null ? null : "<h3>$title",
+        "<b>Company<b>": company == null ? null : company,
+        "<b>Getchu ID<b>": getchuId == null ? null : "[$getchuId]($getchuUrl)",
       };
 }*/
 
@@ -1076,9 +1078,9 @@ class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
       };
 
   Map<String, dynamic> toJsonMarkdown() => {
-        "**Drawr ID**": extUrls == null
+        "<b>Drawr ID<b>": extUrls == null
             ? null
             : "[${Uri.parse(extUrls[0]).host}](${extUrls[0]})",
-        "**Member**": memberName == null ? null : memberName,
+        "<b>Member<b>": memberName == null ? null : memberName,
       };
 }*/

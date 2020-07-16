@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage> {
   TextEditingController _urlController = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   PanelController _panelController = PanelController();
-  ScrollController _searchEngineScrollController = ScrollController();
+  ScrollController _helpController = ScrollController();
   ExpandedTileController _expandedTileController = ExpandedTileController();
   dynamic _image;
   CancelToken token;
@@ -67,8 +67,8 @@ class _HomePageState extends State<HomePage> {
   bool _getAddInfo;
   SplayTreeMap<String, String> _sauceNaoDBMask;
   bool _showBanner = false;
-  String _bannerMessage = '';
-  Function() _bannerAction;
+  Widget _bannerMessage = SizedBox();
+  Widget _bannerAction;
   ValueNotifier<bool> _isFailedtoLoad = ValueNotifier(false);
   BuildContext _dialogContext;
 
@@ -128,29 +128,7 @@ class _HomePageState extends State<HomePage> {
 
   _checkURLContentType(url) async {
     Response r;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        _dialogContext = context;
-        return WillPopScope(
-          onWillPop: () {
-            try {
-              token.cancel("Back Button");
-            } on Exception catch (e) {
-              print(e);
-            }
-            return Future.value(true);
-          },
-          child: AlertDialog(
-            title: ListTile(
-                leading: CircularProgressIndicator(),
-                title: Text("Loading..."),
-                subtitle: Text("Press BACK to cancel")),
-          ),
-        );
-      },
-    );
+    _loadingDialog();
     try {
       token = CancelToken();
       r = await Dio().head(url,
@@ -323,7 +301,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<Response> _sauceNaoConn() async {
     var dbmask = sauceNaoDBMask(_sauceNaoDBMask);
-    print(dbmask);
 
     if (_image is String) {
       try {
@@ -343,6 +320,9 @@ class _HomePageState extends State<HomePage> {
         return await Sauce.sauceNao(dbmask)
             .post("", data: formData, cancelToken: token);
       } on DioError catch (e) {
+        if (e?.response?.statusCode == 429 ?? false) {
+          throw TooManyRequestException(e.response);
+        }
         throw e;
       }
     }
@@ -413,62 +393,83 @@ class _HomePageState extends State<HomePage> {
     );
   }
 */
+
+  _loadingDialog() {
+    return showDialog(
+      context: _scaffoldKey.currentContext,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        _dialogContext = context;
+        return WillPopScope(
+          onWillPop: () {
+            try {
+              token.cancel("Back Button");
+            } on Exception catch (e) {
+              print(e);
+            }
+            return Future.value(true);
+          },
+          child: AlertDialog(
+            title: ListTile(
+                leading: CircularProgressIndicator(),
+                title: Text("Loading..."),
+                subtitle: Text("Press BACK to cancel")),
+          ),
+        );
+      },
+    );
+  }
+
   void _search() async {
     switch (_searchOption) {
       case SearchOption.SauceNao:
         {
           if (_isAllDB != false) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (BuildContext context) {
-                _dialogContext = context;
-                return WillPopScope(
-                  onWillPop: () {
-                    try {
-                      token.cancel("Back Button");
-                    } on Exception catch (e) {
-                      print(e);
-                    }
-                    return Future.value(true);
-                  },
-                  child: AlertDialog(
-                    title: ListTile(
-                        leading: CircularProgressIndicator(),
-                        title: Text("Loading..."),
-                        subtitle: Text("Press BACK to cancel")),
-                  ),
-                );
-              },
-            );
-            print("Use Sauce Nao");
             try {
               var r = await _sauceNaoConn();
               if (r?.data != null) {
                 var sauces = SauceNaoObject.fromJson(r.data);
-                if (sauces.results != null) {
+                if (sauces?.results != null) {
                   var sauce = sauces.results[0];
                   var data = sauce.toSauceNaoData();
                   if (data is SauceNaoH18 && _getAddInfo) {
                     try {
                       sauce.data = await data.withInfo();
+                      Navigator.pop(_dialogContext);
+                      _dialogContext = null;
+                      _hideBanner();
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return SauceDesc(
+                            SauceObject.fromSauceNao(sauce.header, sauce.data));
+                      }));
                     } on NoInfoException catch (e) {
                       print(e);
                       Navigator.pop(_dialogContext);
                       _dialogContext = null;
                       setState(() {
                         _showBanner = true;
-                        _bannerMessage = e.toString();
-                        _bannerAction = () => Navigator.push(context,
+                        _bannerMessage = Text(
+                          "$e",
+                          textAlign: TextAlign.start,
+                        );
+                        _bannerAction = FlatButton(
+                          child: Text("CONTINUE"),
+                          onPressed: () {
+                            Navigator.push(context,
                                 MaterialPageRoute(builder: (context) {
                               return SauceDesc(SauceObject.fromSauceNao(
                                   sauce.header, sauce.data));
                             }));
+                            _hideBanner();
+                          },
+                        );
                       });
                     }
                   } else {
                     Navigator.pop(_dialogContext);
                     _dialogContext = null;
+                    _hideBanner();
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                       return SauceDesc(
@@ -476,18 +477,104 @@ class _HomePageState extends State<HomePage> {
                     }));
                   }
                 } else {
-                  Navigator.pop(_dialogContext);
-                  _dialogContext = null;
                   print("No Sauce");
                   print(
-                      "Status: ${sauces.header.status}\nMessage: ${sauces.header.message}");
+                      "Status: ${sauces?.header?.status}\nMessage: ${sauces?.header?.message}");
+                  throw NoResultException("No Sauce");
                 }
               } else {
-                throw Exception("Response null");
+                throw Exception("No response");
               }
+            } on TooManyRequestException catch (e) {
+              var sauces = SauceNaoObject.fromJson(e.res.data);
+              Future.delayed(Duration(milliseconds: 50)).then((value) {
+                if (_dialogContext != null) {
+                  Navigator.pop(_dialogContext);
+                  _dialogContext = null;
+                  setState(() {
+                    _showBanner = true;
+                    _bannerMessage = MediaQuery(
+                        data: MediaQueryData(textScaleFactor: 1),
+                        child: Html(
+                          shrinkWrap: true,
+                          data: """${sauces.header.message}
+                              <hr>
+                              </br></br>Use of SauceNAO account or API key is not implemented.
+                              </br><a href="https://www.saucenao.com">SauceNAO Website</a>
+                              """,
+                          onLinkTap: (url) {
+                            if (Uri.parse(url).hasAuthority) {
+                              launch(url);
+                            } else {
+                              url = "https://www.saucenao.com/$url";
+                              launch(url);
+                            }
+                          },
+                          style: {
+                            'p': Style(
+                                fontSize: FontSize(14 *
+                                    MediaQuery.of(context).textScaleFactor))
+                          },
+                        ));
+                    _bannerAction = null;
+                  });
+                }
+              });
+            } on DioError catch (e) {
+              switch (e.type) {
+                case DioErrorType.CANCEL:
+                  break;
+                case DioErrorType.RECEIVE_TIMEOUT:
+                case DioErrorType.SEND_TIMEOUT:
+                case DioErrorType.CONNECT_TIMEOUT:
+                case DioErrorType.RESPONSE:
+                case DioErrorType.DEFAULT:
+                  {
+                    Future.delayed(Duration(milliseconds: 50)).then((value) {
+                      if (_dialogContext != null) {
+                        Navigator.pop(_dialogContext);
+                        _dialogContext = null;
+                      }
+                      setState(() {
+                        _showBanner = true;
+                        _bannerAction = null;
+                        _bannerMessage = Text(
+                            "${e.error}\n\nPlease check your internet connection");
+                      });
+                    });
+                  }
+              }
+              print(e);
+            } on NoResultException catch (e) {
+              Future.delayed(Duration(milliseconds: 50)).then((value) {
+                if (_dialogContext != null) {
+                  Navigator.pop(_dialogContext);
+                  _dialogContext = null;
+                }
+                setState(() {
+                  _showBanner = true;
+                  _bannerAction = FlatButton(
+                    child: Text("HELP"),
+                    onPressed: () {
+                      properImageHelp(context, _helpController);
+                    },
+                  );
+                  _bannerMessage = Text("${e.message}");
+                });
+              });
+              print(e);
             } on Exception catch (e) {
-              Navigator.pop(_dialogContext);
-              _dialogContext = null;
+              Future.delayed(Duration(milliseconds: 50)).then((value) {
+                if (_dialogContext != null) {
+                  Navigator.pop(_dialogContext);
+                  _dialogContext = null;
+                }
+                setState(() {
+                  _showBanner = true;
+                  _bannerAction = null;
+                  _bannerMessage = Text("$e");
+                });
+              });
               print(e);
             }
           } else {
@@ -505,30 +592,6 @@ class _HomePageState extends State<HomePage> {
         }
       case SearchOption.Trace:
         {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext context) {
-              _dialogContext = context;
-              return WillPopScope(
-                onWillPop: () {
-                  try {
-                    token.cancel("Back Button");
-                  } on Exception catch (e) {
-                    print(e);
-                  }
-                  return Future.value(true);
-                },
-                child: AlertDialog(
-                  title: ListTile(
-                      leading: CircularProgressIndicator(),
-                      title: Text("Loading..."),
-                      subtitle: Text("Press BACK to cancel")),
-                ),
-              );
-            },
-          );
-          print("Use Trace");
           try {
             var r = await _traceConn();
             if (r?.data != null) {
@@ -539,27 +602,75 @@ class _HomePageState extends State<HomePage> {
                   sauce = await sauce.withInfo();
                   Navigator.pop(_dialogContext);
                   _dialogContext = null;
+                  _hideBanner();
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 } else {
                   Navigator.pop(_dialogContext);
                   _dialogContext = null;
+                  _hideBanner();
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 }
               } else {
-                Navigator.pop(_dialogContext);
-                _dialogContext = null;
                 print("No Sauce");
+                throw NoResultException("No Sauce");
               }
             } else {
-              throw Exception("Response null");
+              throw Exception("No Response");
             }
+          } on DioError catch (e) {
+            switch (e.type) {
+              case DioErrorType.CANCEL:
+                break;
+              case DioErrorType.RECEIVE_TIMEOUT:
+              case DioErrorType.SEND_TIMEOUT:
+              case DioErrorType.CONNECT_TIMEOUT:
+              case DioErrorType.RESPONSE:
+              case DioErrorType.DEFAULT:
+                {
+                  Future.delayed(Duration(milliseconds: 50)).then((value) {
+                    if (_dialogContext != null) {
+                      Navigator.pop(_dialogContext);
+                      _dialogContext = null;
+                    }
+                    setState(() {
+                      _showBanner = true;
+                      _bannerAction = null;
+                      _bannerMessage = Text(
+                          "${e.error}\n\nPlease check your internet connection");
+                    });
+                  });
+                }
+            }
+            print(e);
+          } on NoResultException catch (e) {
+            Future.delayed(Duration(milliseconds: 50)).then((value) {
+              if (_dialogContext != null) {
+                Navigator.pop(_dialogContext);
+                _dialogContext = null;
+              }
+              setState(() {
+                _showBanner = true;
+                _bannerAction = FlatButton(
+                  child: Text("HELP"),
+                  onPressed: () {
+                    properImageHelp(context, _helpController);
+                  },
+                );
+                _bannerMessage = Text("${e.message}");
+              });
+            });
+            print(e);
           } on Exception catch (e) {
-            Navigator.pop(_dialogContext);
-            _dialogContext = null;
+            Future.delayed(Duration(milliseconds: 250)).then((value) {
+              if (_dialogContext != null) {
+                Navigator.pop(_dialogContext);
+                _dialogContext = null;
+              }
+            });
             print(e);
           }
           break;
@@ -574,7 +685,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   _loadFailed(bool val) async {
-    await Future.delayed(Duration.zero);
+    await Future.delayed(Duration(milliseconds: 50));
     if (_dialogContext != null) {
       Navigator.pop(_dialogContext);
       _dialogContext = null;
@@ -648,6 +759,7 @@ class _HomePageState extends State<HomePage> {
           onPressed: (_image != null && !isFailed)
               ? () {
                   _panelController.close();
+                  _loadingDialog();
                   _search();
                 }
               : () {
@@ -702,12 +814,11 @@ class _HomePageState extends State<HomePage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsetsDirectional.only(
-                start: 16.0, top: 24.0, end: 16.0, bottom: 4.0),
-            child: Text(
-              "$_bannerMessage",
-              textAlign: TextAlign.start,
+          Flexible(
+            child: Padding(
+              padding: EdgeInsetsDirectional.only(
+                  start: 16.0, top: 24.0, end: 16.0, bottom: 4.0),
+              child: _bannerMessage,
             ),
           ),
           ButtonBar(alignment: MainAxisAlignment.spaceBetween, children: [
@@ -720,17 +831,12 @@ class _HomePageState extends State<HomePage> {
                 FlatButton(
                   child: Text("RETRY"),
                   onPressed: () {
-                    _search();
-                    _hideBanner();
+                    _loadingDialog();
+                    Future.delayed(Duration(milliseconds: 50))
+                        .then((value) => _search());
                   },
                 ),
-                FlatButton(
-                  child: Text("CONTINUE"),
-                  onPressed: () {
-                    _bannerAction();
-                    _hideBanner();
-                  },
-                )
+                (_bannerAction != null) ? _bannerAction : SizedBox()
               ],
             ),
           ])
@@ -746,11 +852,11 @@ class _HomePageState extends State<HomePage> {
           return AlertDialog(
             content: Scrollbar(
               isAlwaysShown: true,
-              controller: _searchEngineScrollController,
+              controller: _helpController,
               child: Container(
                 height: MediaQuery.of(context).size.height / 4,
                 child: SingleChildScrollView(
-                  controller: _searchEngineScrollController,
+                  controller: _helpController,
                   child: MediaQuery(
                       data: MediaQueryData(textScaleFactor: 1),
                       child: Html(
@@ -792,11 +898,11 @@ class _HomePageState extends State<HomePage> {
           return AlertDialog(
             content: Scrollbar(
               isAlwaysShown: true,
-              controller: _searchEngineScrollController,
+              controller: _helpController,
               child: Container(
                 height: MediaQuery.of(context).size.height / 4,
                 child: SingleChildScrollView(
-                  controller: _searchEngineScrollController,
+                  controller: _helpController,
                   child: MediaQuery(
                       data: MediaQueryData(textScaleFactor: 1),
                       child: Html(
@@ -809,11 +915,6 @@ class _HomePageState extends State<HomePage> {
                         <hr>
                         <p><a href='https://trace.moe/'><b>Trace</b></a>: Trace or WAIT(What Anime Is This?) is search engine for anime. Performs relatively better for searching anime and will return short video.
                         <p>For more information: <a href='https://trace.moe/about'>About Trace(WAIT)</a></p>
-                        <hr>
-                        <p>Please use original/un-cropped media(or use cropped if consist of multiple images) for better result.
-                        </br>Use editing tools provided by this app or external editing app to edit the image.</p>
-                        <p>For general idea of a proper image, regardless of search engine, please refer to <a href='https://trace.moe/faq'>Trace FAQ</a>
-                        (Why I can't find the search result?) and adjust accordingly.</p>
                         """,
                         onLinkTap: (url) {
                           print(url);
@@ -1183,12 +1284,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    ScreenUtil.init();
-
-    _expandedTileController.addListener(_expansionTileListener);
-
-    _initOptions();
-
     // For sharing images coming from outside the app while the app is in the memory
     _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
         .listen((List<SharedMediaFile> value) {
@@ -1234,6 +1329,11 @@ class _HomePageState extends State<HomePage> {
         _checkURLContentType(value);
       }
     });
+    ScreenUtil.init();
+
+    _expandedTileController.addListener(_expansionTileListener);
+
+    _initOptions();
   }
 
   @override

@@ -3,11 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:need_for_sauce/models/models.dart';
 import 'package:share/share.dart';
 import 'package:need_for_sauce/common/common.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_html/style.dart';
+import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart' as dom hide Text;
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -23,6 +26,7 @@ class SauceDesc extends StatefulWidget {
 class SauceDescState extends State<SauceDesc> {
   VideoPlayerController _videoPlayerController;
   ChewieController _chewieController;
+  ScrollController _helpController = ScrollController();
   Future<void> _future;
 
   Future<void> initVideoPlayer() async {
@@ -70,22 +74,38 @@ class SauceDescState extends State<SauceDesc> {
             ? (widget.sauce.imageUrl == null) ? Container() : _imageShow()
             : _videoPlayer(),
         Padding(
-          padding: EdgeInsets.all(10),
-          child: MarkdownBody(
-              onTapLink: (String link) {
-                launch(link);
-              },
-              selectable: false,
-              styleSheet: MarkdownStyleSheet(
-                  p: TextStyle(fontSize: 16, color: Colors.black),
-                  h3: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold)),
-              data: (widget?.sauce?.sauceStatus ?? true)
-                  ? "```Similarity: ${widget.sauce.similarity}%```\n\n${widget.sauce.reply}"
-                  : widget.sauce.reply),
-        ),
+            padding: EdgeInsets.all(10),
+            child: MediaQuery(
+                data: MediaQueryData(textScaleFactor: 1),
+                child: Html(
+                  shrinkWrap: true,
+                  data: (widget?.sauce?.sauceStatus ?? true)
+                      ? """
+                      <code><a href='help'>Got wrong result?</a>
+                      </br>Similarity: ${widget.sauce.similarity}%</code>
+                      </br>${widget.sauce.reply}
+                      """
+                      : widget.sauce.reply,
+                  onLinkTap: (url) {
+                    canLaunch(url).then((value) {
+                      if (value) {
+                        launch(url);
+                      } else {
+                        if (url == 'help') {
+                          properImageHelp(context, _helpController);
+                        }
+                      }
+                    });
+                  },
+                  style: {
+                    'p': Style(
+                        fontSize: FontSize(
+                            14 * MediaQuery.of(context).textScaleFactor)),
+                    'code': Style(
+                        fontSize: FontSize(
+                            10 * MediaQuery.of(context).textScaleFactor)),
+                  },
+                ))),
       ],
     );
   }
@@ -96,6 +116,20 @@ class SauceDescState extends State<SauceDesc> {
         body: Center(
           child: Text("No connection to server"),
         ));
+  }
+
+  String removeAllHtmlTags(String htmlString) {
+    List<String> cleanStrings = new List<String>();
+    dom.Document parsed = parser.parse(
+        htmlString.replaceAll('</br>', '</p><p>').replaceAll('<h3>', '<p>'));
+    List<dom.Element> ps = parsed.querySelectorAll('p');
+
+    if (ps.isNotEmpty)
+      ps.forEach((f) {
+        if (f.text != '') cleanStrings.add(f.text);
+      });
+
+    return cleanStrings.join('\n');
   }
 
   @override
@@ -124,7 +158,7 @@ class SauceDescState extends State<SauceDesc> {
                 IconButton(
                   tooltip: "Share",
                   onPressed: () {
-                    Share.share(widget.sauce.reply);
+                    Share.share(removeAllHtmlTags(widget.sauce.reply));
                   },
                   icon: Icon(Icons.share),
                 )
