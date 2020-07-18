@@ -1329,7 +1329,6 @@ class _HomePageState extends State<HomePage> {
         _checkURLContentType(value);
       }
     });
-    ScreenUtil.init();
 
     _expandedTileController.addListener(_expansionTileListener);
 
@@ -1338,6 +1337,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    ScreenUtil.init(context);
     return WillPopScope(
       onWillPop: () {
         if (!_panelController.isPanelClosed) {

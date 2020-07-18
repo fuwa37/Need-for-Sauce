@@ -36,7 +36,6 @@ class SauceDescState extends State<SauceDesc> {
         videoPlayerController: _videoPlayerController,
         aspectRatio: _videoPlayerController.value.aspectRatio,
         autoPlay: false,
-        looping: true,
       );
     });
   }
