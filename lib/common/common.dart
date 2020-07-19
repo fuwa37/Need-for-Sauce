@@ -1,15 +1,15 @@
 // https://github.com/fluttercandies/extended_image/blob/ab9f1686223e99fbc1b85e7b1a7385651a34abec/example/lib/common/common_widget.dart
-
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
 import 'dart:io';
 import 'dart:math' as math;
-
-import 'package:dio/dio.dart';
+import 'package:provider/provider.dart';
+import 'package:need_for_sauce/common/notifier.dart';
 
 class FlatButtonWithIcon extends FlatButton with MaterialButtonWithIconMixin {
   FlatButtonWithIcon({
@@ -329,4 +329,32 @@ properImageHelp(BuildContext context, ScrollController _helpController) {
           ],
         );
       });
+}
+
+loadingDialog({@required BuildContext scaffoldContext, CancelToken token}) {
+  print("Loading");
+  showDialog(
+    context: scaffoldContext,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      var loadingNotifier = Provider.of<LoadingNotifier>(context);
+      Future.microtask(() => loadingNotifier.setDialogContext(context));
+      return WillPopScope(
+        onWillPop: () {
+          try {
+            token?.cancel("Back Button");
+          } on Exception catch (e) {
+            print(e);
+          }
+          return Future.value(true);
+        },
+        child: AlertDialog(
+          title: ListTile(
+              leading: CircularProgressIndicator(),
+              title: Text("Loading..."),
+              subtitle: Text("Press BACK to cancel")),
+        ),
+      );
+    },
+  );
 }

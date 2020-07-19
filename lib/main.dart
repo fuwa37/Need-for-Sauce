@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
@@ -10,7 +9,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_html/style.dart';
 import 'package:need_for_sauce/pages/editors/image_editor.dart';
-import 'package:extended_image/extended_image.dart';
+import 'package:need_for_sauce/widgets/main/bab_row.dart';
+import 'package:need_for_sauce/widgets/main/main_button.dart';
+import 'package:need_for_sauce/widgets/main/image_viewer.dart';
+import 'package:need_for_sauce/widgets/main/banner.dart';
 import 'package:need_for_sauce/models/models.dart';
 import 'package:need_for_sauce/pages/sauce.dart';
 import 'package:need_for_sauce/pages/editors/video_capture.dart';
@@ -25,13 +27,15 @@ import 'package:need_for_sauce/common/common.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mime/mime.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_expanded_tile/flutter_expanded_tile.dart';
-import 'package:flutter_expanded_tile/tileController.dart';
+import 'package:expandable/expandable.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import 'package:need_for_sauce/common/notifier.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(ChangeNotifierProvider(
+    create: (context) => LoadingNotifier(), child: MyApp()));
 
 class MyApp extends StatelessWidget {
   @override
@@ -42,7 +46,14 @@ class MyApp extends StatelessWidget {
     ]);
     return MaterialApp(
       title: "Need for Sauce",
-      home: HomePage(),
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => ImageNotifier()),
+          ChangeNotifierProvider(create: (context) => ErrorBannerNotifier()),
+          ChangeNotifierProvider(create: (context) => SearchOptionNotifier())
+        ],
+        child: HomePage(),
+      ),
     );
   }
 }
@@ -59,22 +70,14 @@ class _HomePageState extends State<HomePage> {
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   PanelController _panelController = PanelController();
   ScrollController _helpController = ScrollController();
-  ExpandedTileController _expandedTileController = ExpandedTileController();
-  dynamic _image;
-  CancelToken token;
-  bool _isAllDB = true;
-  SearchOption _searchOption;
-  bool _getAddInfo;
-  SplayTreeMap<String, String> _sauceNaoDBMask;
-  bool _showBanner = false;
-  Widget _bannerMessage = SizedBox();
-  Widget _bannerAction;
-  ValueNotifier<bool> _isFailedtoLoad = ValueNotifier(false);
-  BuildContext _dialogContext;
+  ExpandableController _expandableController = ExpandableController();
 
   _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
     print(await Permission.storage.request());
+
+    ImageNotifier _imageNotifier =
+        Provider.of<ImageNotifier>(context, listen: false);
 
     File media = videoIntent ?? await FilePicker.getFile(type: FileType.media);
     if (media == null && videoIntent == null) return;
@@ -89,13 +92,9 @@ class _HomePageState extends State<HomePage> {
         }));
 
         if (result == null) _getMedia();
-        setState(() {
-          _image = result;
-        });
+        _imageNotifier.setImage(result);
       } else {
-        setState(() {
-          _image = media;
-        });
+        _imageNotifier.setImage(media);
       }
     } else if (fileType[0] == 'video') {
       Uint8List result =
@@ -104,48 +103,44 @@ class _HomePageState extends State<HomePage> {
       }));
       if (result == null && videoIntent == null) _getMedia();
 
-      setState(() {
-        _image = result;
-      });
+      _imageNotifier.setImage(result);
     } else {
       return;
     }
   }
 
   _editImage() async {
+    ImageNotifier _imageNotifier =
+        Provider.of<ImageNotifier>(context, listen: false);
     Uint8List result =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ImageEditor(_image);
+      return ImageEditor(_imageNotifier.image);
     }));
     if (result == null) return;
 
     if (result != null) {
-      setState(() {
-        _image = result;
-      });
+      _imageNotifier.setImage(result);
     }
   }
 
   _checkURLContentType(url) async {
     Response r;
-    _loadingDialog();
+    ImageNotifier _imageNotifier =
+        Provider.of<ImageNotifier>(context, listen: false);
+    LoadingNotifier _loadingNotifier = context.read<LoadingNotifier>();
     try {
-      token = CancelToken();
+      var token = CancelToken();
+      loadingDialog(scaffoldContext: _scaffoldKey.currentContext, token: token);
       r = await Dio().head(url,
           options: Options(sendTimeout: 1000, receiveTimeout: 1000),
           cancelToken: token);
     } on DioError catch (e) {
       print(e);
-      Navigator.pop(_dialogContext);
-      _dialogContext = null;
+      _loadingNotifier.popDialog();
       return;
     }
     Headers headers = r.headers;
     String _type = headers['content-type'][0];
-    if (_dialogContext != null) {
-      Navigator.pop(_dialogContext);
-      _dialogContext = null;
-    }
     if (_type.split('/')[0] == 'image') {
       Uint8List result;
       if (_type.split('/')[1] == 'gif') {
@@ -153,30 +148,25 @@ class _HomePageState extends State<HomePage> {
             await Navigator.push(context, MaterialPageRoute(builder: (context) {
           return GifCapture(url);
         }));
-
         if (result == null) _getMedia();
-        setState(() {
-          _image = result;
-        });
+        _imageNotifier.setImage(result);
+        _loadingNotifier.popDialog();
       } else {
-        setState(() {
-          _image = url;
-        });
+        _imageNotifier.setImage(url);
       }
+      _loadingNotifier.popDialog();
+      return;
     } else if (_type.split('/')[0] == 'video') {
       Uint8List result =
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
         return VideoCapture(url);
       }));
-      if (_dialogContext != null) {
-        Navigator.pop(_dialogContext);
-        _dialogContext = null;
-      }
-      setState(() {
-        _image = result;
-      });
+      _imageNotifier.setImage(result);
+      _loadingNotifier.popDialog();
+      return;
     } else {
       print("Not image/video");
+      _loadingNotifier.popDialog();
       return;
     }
   }
@@ -300,24 +290,26 @@ class _HomePageState extends State<HomePage> {
   }*/
 
   Future<Response> _sauceNaoConn() async {
-    var dbmask = sauceNaoDBMask(_sauceNaoDBMask);
+    var mask =
+        sauceNaoDBMask(context.read<SearchOptionNotifier>().sauceNaoMask);
+    var image = context.read<ImageNotifier>().image;
+    var token = CancelToken();
+    loadingDialog(scaffoldContext: _scaffoldKey.currentContext, token: token);
 
-    if (_image is String) {
+    if (image is String) {
       try {
-        token = CancelToken();
-        return await Sauce.sauceNao(dbmask)
-            .get("&url=" + Uri.encodeComponent(_image), cancelToken: token);
+        return await Sauce.sauceNao(mask)
+            .get("&url=" + Uri.encodeComponent(image), cancelToken: token);
       } on DioError catch (e) {
         throw e;
       }
     } else {
       FormData formData = FormData.fromMap({
-        "file": await _uploadedType(_image),
+        "file": await _uploadedType(image),
       });
 
       try {
-        token = CancelToken();
-        return await Sauce.sauceNao(dbmask)
+        return await Sauce.sauceNao(mask)
             .post("", data: formData, cancelToken: token);
       } on DioError catch (e) {
         if (e?.response?.statusCode == 429 ?? false) {
@@ -329,23 +321,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<Response> _traceConn() async {
-    if (_image is String) {
+    var image = context.read<ImageNotifier>().image;
+    var token = CancelToken();
+    loadingDialog(scaffoldContext: _scaffoldKey.currentContext, token: token);
+    if (image is String) {
       try {
-        token = CancelToken();
         return await Sauce.trace()
-            .get("?url=" + Uri.encodeComponent(_image), cancelToken: token);
+            .get("?url=" + Uri.encodeComponent(image), cancelToken: token);
       } on DioError catch (e) {
         throw e;
       }
     } else {
       FormData formData = FormData.fromMap({
-        "image": (_image is File)
-            ? base64Encode(_image.readAsBytesSync())
-            : (_image is List<int>) ? base64Encode(_image) : null,
+        "image": (image is File)
+            ? base64Encode(image.readAsBytesSync())
+            : (image is List<int>) ? base64Encode(image) : null,
       });
 
       try {
-        token = CancelToken();
         return await Sauce.trace().post("", data: formData, cancelToken: token);
       } on DioError catch (e) {
         throw e;
@@ -394,37 +387,16 @@ class _HomePageState extends State<HomePage> {
   }
 */
 
-  _loadingDialog() {
-    return showDialog(
-      context: _scaffoldKey.currentContext,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        _dialogContext = context;
-        return WillPopScope(
-          onWillPop: () {
-            try {
-              token.cancel("Back Button");
-            } on Exception catch (e) {
-              print(e);
-            }
-            return Future.value(true);
-          },
-          child: AlertDialog(
-            title: ListTile(
-                leading: CircularProgressIndicator(),
-                title: Text("Loading..."),
-                subtitle: Text("Press BACK to cancel")),
-          ),
-        );
-      },
-    );
-  }
-
   void _search() async {
-    switch (_searchOption) {
+    ErrorBannerNotifier _errorBannerNotifier =
+        context.read<ErrorBannerNotifier>();
+    LoadingNotifier _loadingNotifier = context.read<LoadingNotifier>();
+    SearchOptionNotifier _searchOptionNotifier =
+        context.read<SearchOptionNotifier>();
+    switch (_searchOptionNotifier.searchOption) {
       case SearchOption.SauceNao:
         {
-          if (_isAllDB != false) {
+          if (_searchOptionNotifier.isAllIndexes != false) {
             try {
               var r = await _sauceNaoConn();
               if (r?.data != null) {
@@ -432,12 +404,10 @@ class _HomePageState extends State<HomePage> {
                 if (sauces?.results != null) {
                   var sauce = sauces.results[0];
                   var data = sauce.toSauceNaoData();
-                  if (data is SauceNaoH18 && _getAddInfo) {
+                  if (data is SauceNaoH18 && _searchOptionNotifier.getAddInfo) {
                     try {
                       sauce.data = await data.withInfo();
-                      Navigator.pop(_dialogContext);
-                      _dialogContext = null;
-                      _hideBanner();
+                      _loadingNotifier.popDialog();
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
                         return SauceDesc(
@@ -445,31 +415,27 @@ class _HomePageState extends State<HomePage> {
                       }));
                     } on NoInfoException catch (e) {
                       print(e);
-                      Navigator.pop(_dialogContext);
-                      _dialogContext = null;
-                      setState(() {
-                        _showBanner = true;
-                        _bannerMessage = Text(
-                          "$e",
-                          textAlign: TextAlign.start,
-                        );
-                        _bannerAction = FlatButton(
-                          child: Text("CONTINUE"),
-                          onPressed: () {
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (context) {
-                              return SauceDesc(SauceObject.fromSauceNao(
-                                  sauce.header, sauce.data));
-                            }));
-                            _hideBanner();
-                          },
-                        );
-                      });
+                      _loadingNotifier.popDialog();
+                      _errorBannerNotifier.setPop(true);
+                      _errorBannerNotifier.setUpBanner(
+                          message: Text(
+                            "$e",
+                            textAlign: TextAlign.start,
+                          ),
+                          action: FlatButton(
+                            child: Text("CONTINUE"),
+                            onPressed: () {
+                              Navigator.push(context,
+                                  MaterialPageRoute(builder: (context) {
+                                return SauceDesc(SauceObject.fromSauceNao(
+                                    sauce.header, sauce.data));
+                              }));
+                              _errorBannerNotifier.setPop(false);
+                            },
+                          ));
                     }
                   } else {
-                    Navigator.pop(_dialogContext);
-                    _dialogContext = null;
-                    _hideBanner();
+                    _loadingNotifier.popDialog();
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                       return SauceDesc(
@@ -487,39 +453,33 @@ class _HomePageState extends State<HomePage> {
               }
             } on TooManyRequestException catch (e) {
               var sauces = SauceNaoObject.fromJson(e.res.data);
-              Future.delayed(Duration(milliseconds: 50)).then((value) {
-                if (_dialogContext != null) {
-                  Navigator.pop(_dialogContext);
-                  _dialogContext = null;
-                  setState(() {
-                    _showBanner = true;
-                    _bannerMessage = MediaQuery(
-                        data: MediaQueryData(textScaleFactor: 1),
-                        child: Html(
-                          shrinkWrap: true,
-                          data: """${sauces.header.message}
+              _loadingNotifier.popDialog();
+              _errorBannerNotifier.setPop(true);
+              _errorBannerNotifier.setUpBanner(
+                  message: MediaQuery(
+                      data: MediaQueryData(textScaleFactor: 1),
+                      child: Html(
+                        shrinkWrap: true,
+                        data: """${sauces.header.message}
                               <hr>
                               </br></br>Use of SauceNAO account or API key is not implemented.
                               </br><a href="https://www.saucenao.com">SauceNAO Website</a>
                               """,
-                          onLinkTap: (url) {
-                            if (Uri.parse(url).hasAuthority) {
-                              launch(url);
-                            } else {
-                              url = "https://www.saucenao.com/$url";
-                              launch(url);
-                            }
-                          },
-                          style: {
-                            'p': Style(
-                                fontSize: FontSize(14 *
-                                    MediaQuery.of(context).textScaleFactor))
-                          },
-                        ));
-                    _bannerAction = null;
-                  });
-                }
-              });
+                        onLinkTap: (url) {
+                          if (Uri.parse(url).hasAuthority) {
+                            launch(url);
+                          } else {
+                            url = "https://www.saucenao.com/$url";
+                            launch(url);
+                          }
+                        },
+                        style: {
+                          'p': Style(
+                              fontSize: FontSize(
+                                  14 * MediaQuery.of(context).textScaleFactor))
+                        },
+                      )),
+                  action: null);
             } on DioError catch (e) {
               switch (e.type) {
                 case DioErrorType.CANCEL:
@@ -530,51 +490,32 @@ class _HomePageState extends State<HomePage> {
                 case DioErrorType.RESPONSE:
                 case DioErrorType.DEFAULT:
                   {
-                    Future.delayed(Duration(milliseconds: 50)).then((value) {
-                      if (_dialogContext != null) {
-                        Navigator.pop(_dialogContext);
-                        _dialogContext = null;
-                      }
-                      setState(() {
-                        _showBanner = true;
-                        _bannerAction = null;
-                        _bannerMessage = Text(
-                            "${e.error}\n\nPlease check your internet connection");
-                      });
-                    });
+                    _loadingNotifier.popDialog();
+                    _errorBannerNotifier.setPop(true);
+                    _errorBannerNotifier.setUpBanner(
+                        message: Text(
+                            "${e.error}\n\nPlease check your internet connection"),
+                        action: null);
                   }
               }
               print(e);
             } on NoResultException catch (e) {
-              Future.delayed(Duration(milliseconds: 50)).then((value) {
-                if (_dialogContext != null) {
-                  Navigator.pop(_dialogContext);
-                  _dialogContext = null;
-                }
-                setState(() {
-                  _showBanner = true;
-                  _bannerAction = FlatButton(
+              _loadingNotifier.popDialog();
+              _errorBannerNotifier.setPop(true);
+              _errorBannerNotifier.setUpBanner(
+                  message: Text("${e.message}"),
+                  action: FlatButton(
                     child: Text("HELP"),
                     onPressed: () {
                       properImageHelp(context, _helpController);
                     },
-                  );
-                  _bannerMessage = Text("${e.message}");
-                });
-              });
+                  ));
               print(e);
             } on Exception catch (e) {
-              Future.delayed(Duration(milliseconds: 50)).then((value) {
-                if (_dialogContext != null) {
-                  Navigator.pop(_dialogContext);
-                  _dialogContext = null;
-                }
-                setState(() {
-                  _showBanner = true;
-                  _bannerAction = null;
-                  _bannerMessage = Text("$e");
-                });
-              });
+              _loadingNotifier.popDialog();
+              _errorBannerNotifier.setPop(true);
+              _errorBannerNotifier.setUpBanner(
+                  message: Text("$e"), action: null);
               print(e);
             }
           } else {
@@ -586,7 +527,7 @@ class _HomePageState extends State<HomePage> {
                   },
                 ));
             _panelController.open();
-            _expandedTileController.expand();
+            _expandableController.expanded = true;
           }
           break;
         }
@@ -598,18 +539,14 @@ class _HomePageState extends State<HomePage> {
               var sauces = TraceObject.fromJson(r.data);
               if (sauces.docs != null) {
                 var sauce = sauces.docs[0];
-                if (_getAddInfo) {
+                if (_searchOptionNotifier.getAddInfo) {
                   sauce = await sauce.withInfo();
-                  Navigator.pop(_dialogContext);
-                  _dialogContext = null;
-                  _hideBanner();
+                  _loadingNotifier.popDialog();
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
                 } else {
-                  Navigator.pop(_dialogContext);
-                  _dialogContext = null;
-                  _hideBanner();
+                  _loadingNotifier.popDialog();
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return SauceDesc(SauceObject.fromTrace(sauce));
                   }));
@@ -631,46 +568,30 @@ class _HomePageState extends State<HomePage> {
               case DioErrorType.RESPONSE:
               case DioErrorType.DEFAULT:
                 {
-                  Future.delayed(Duration(milliseconds: 50)).then((value) {
-                    if (_dialogContext != null) {
-                      Navigator.pop(_dialogContext);
-                      _dialogContext = null;
-                    }
-                    setState(() {
-                      _showBanner = true;
-                      _bannerAction = null;
-                      _bannerMessage = Text(
-                          "${e.error}\n\nPlease check your internet connection");
-                    });
-                  });
+                  _loadingNotifier.popDialog();
+                  _errorBannerNotifier.setPop(true);
+                  _errorBannerNotifier.setUpBanner(
+                      message: Text(
+                          "${e.error}\n\nPlease check your internet connection"),
+                      action: null);
                 }
             }
             print(e);
           } on NoResultException catch (e) {
-            Future.delayed(Duration(milliseconds: 50)).then((value) {
-              if (_dialogContext != null) {
-                Navigator.pop(_dialogContext);
-                _dialogContext = null;
-              }
-              setState(() {
-                _showBanner = true;
-                _bannerAction = FlatButton(
+            _loadingNotifier.popDialog();
+            _errorBannerNotifier.setPop(true);
+            _errorBannerNotifier.setUpBanner(
+                message: Text("${e.message}"),
+                action: FlatButton(
                   child: Text("HELP"),
                   onPressed: () {
                     properImageHelp(context, _helpController);
                   },
-                );
-                _bannerMessage = Text("${e.message}");
-              });
-            });
+                ));
+
             print(e);
           } on Exception catch (e) {
-            Future.delayed(Duration(milliseconds: 250)).then((value) {
-              if (_dialogContext != null) {
-                Navigator.pop(_dialogContext);
-                _dialogContext = null;
-              }
-            });
+            _loadingNotifier.popDialog();
             print(e);
           }
           break;
@@ -682,167 +603,6 @@ class _HomePageState extends State<HomePage> {
           break;
         }
     }
-  }
-
-  _loadFailed(bool val) async {
-    await Future.delayed(Duration(milliseconds: 50));
-    if (_dialogContext != null) {
-      Navigator.pop(_dialogContext);
-      _dialogContext = null;
-    }
-    _isFailedtoLoad.value = val;
-  }
-
-  Widget _imageLoad() {
-    var _eImage = ExtendedImage(
-      image: imageProvider(_image),
-      fit: BoxFit.contain,
-      width: double.infinity,
-      height: double.infinity,
-      mode: ExtendedImageMode.none,
-      enableLoadState: true,
-      loadStateChanged: (ExtendedImageState state) {
-        switch (state.extendedImageLoadState) {
-          case LoadState.loading:
-            {
-              return Center(child: CircularProgressIndicator());
-            }
-          case LoadState.completed:
-            {
-              _loadFailed(false);
-              return ExtendedRawImage(
-                image: state.extendedImageInfo?.image,
-                fit: BoxFit.contain,
-                width: double.infinity,
-                height: double.infinity,
-              );
-            }
-          case LoadState.failed:
-            {
-              print("failed");
-              _loadFailed(true);
-              return Center(
-                child: Text("Failed to load image"),
-              );
-            }
-          default:
-            {
-              return Text("Failed");
-            }
-        }
-      },
-    );
-
-    return _eImage;
-  }
-
-  Widget _imageViewer() {
-    return (_image == null)
-        ? Center(
-            child: Text(
-              'No media selected',
-            ),
-          )
-        : _imageLoad();
-  }
-
-  Widget _menuButtons() {
-    return ValueListenableBuilder(
-      valueListenable: _isFailedtoLoad,
-      builder: (context, isFailed, child) {
-        return FloatingActionButton(
-          tooltip: (_image != null && !isFailed) ? "Search" : "Pick",
-          heroTag: null,
-          child: (_image != null && !isFailed)
-              ? Icon(Icons.search)
-              : Icon(Icons.add),
-          onPressed: (_image != null && !isFailed)
-              ? () {
-                  _panelController.close();
-                  _loadingDialog();
-                  _search();
-                }
-              : () {
-                  showModalBottomSheet(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Wrap(
-                          children: [
-                            ListTile(
-                              leading: Icon(Icons.perm_media),
-                              title: Text("Pick Media (Image/Video)"),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _panelController.close();
-                                if (_isFailedtoLoad.value) {
-                                  setState(() {
-                                    _image = null;
-                                  });
-                                }
-                                _getMedia();
-                              },
-                            ),
-                            ListTile(
-                              leading: Icon(Icons.insert_link),
-                              title: Text("Pick from URL (Image/Video)"),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _panelController.close();
-                                if (_isFailedtoLoad.value) {
-                                  setState(() {
-                                    _image = null;
-                                  });
-                                }
-                                _pickURL();
-                              },
-                            )
-                          ],
-                        );
-                      });
-                },
-        );
-      },
-    );
-  }
-
-  //Flutter MaterialBanner
-  Widget _banner() {
-    return Card(
-      elevation: 8,
-      margin: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Flexible(
-            child: Padding(
-              padding: EdgeInsetsDirectional.only(
-                  start: 16.0, top: 24.0, end: 16.0, bottom: 4.0),
-              child: _bannerMessage,
-            ),
-          ),
-          ButtonBar(alignment: MainAxisAlignment.spaceBetween, children: [
-            FlatButton(
-              child: Text("DISMISS"),
-              onPressed: _hideBanner,
-            ),
-            Row(
-              children: [
-                FlatButton(
-                  child: Text("RETRY"),
-                  onPressed: () {
-                    _loadingDialog();
-                    Future.delayed(Duration(milliseconds: 50))
-                        .then((value) => _search());
-                  },
-                ),
-                (_bannerAction != null) ? _bannerAction : SizedBox()
-              ],
-            ),
-          ])
-        ],
-      ),
-    );
   }
 
   _addInfoHelp() {
@@ -941,7 +701,7 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
-  Widget _mainBody() {
+  Widget _mainBody(BuildContext context) {
     return SlidingUpPanel(
       body: Padding(
           padding:
@@ -951,16 +711,18 @@ class _HomePageState extends State<HomePage> {
               Container(
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height,
-                child: _imageViewer(),
+                child: ImageViewer(),
               ),
-              (_showBanner) ? _banner() : SizedBox(),
+              ErrorBanner(
+                search: _search,
+              )
             ],
           )),
       backdropEnabled: true,
       controller: _panelController,
       onPanelClosed: () {
         try {
-          _expandedTileController?.collapse();
+          _expandableController?.expanded = false;
         } on Exception catch (e) {
           print(e);
         }
@@ -971,15 +733,27 @@ class _HomePageState extends State<HomePage> {
       snapPoint: 0.5,
       header: Container(
           width: MediaQuery.of(context).size.width,
+          height: 56,
+          color: Colors.blue,
           padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(
                 child: ListTile(
+                  onTap: () {
+                    if (_panelController.isPanelOpen) {
+                      _panelController.close();
+                    } else {
+                      _panelController.open();
+                    }
+                  },
                   title: Text(
                     "Options",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Colors.white),
                   ),
                 ),
               ),
@@ -995,19 +769,57 @@ class _HomePageState extends State<HomePage> {
             ],
           )),
       renderPanelSheet: true,
-      panel: Padding(
-        padding: EdgeInsets.fromLTRB(0, 48, 0, 48),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                  padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+      panel: Consumer<SearchOptionNotifier>(
+          builder: (context, searchOptionNotifier, child) {
+        var _widthConstraint = (ScreenUtil.screenWidth - 32) / 3;
+        if (_widthConstraint < 125)
+          _widthConstraint = (ScreenUtil.screenWidth - 32) / 2;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(0, 56, 0, 0),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                    padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            "Get Additional Information",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
+                        ),
+                        Flexible(
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Flexible(
+                              child: IconButton(
+                                color: Colors.black45,
+                                icon: const Icon(Icons.info),
+                                onPressed: () {
+                                  _addInfoHelp();
+                                },
+                              ),
+                            ),
+                            Switch(
+                              value: searchOptionNotifier.getAddInfo ?? false,
+                              onChanged: (val) {
+                                searchOptionNotifier.setGetAddInfo(val);
+                                SharedPreferencesUtils.setAddInfo(val);
+                              },
+                            )
+                          ]),
+                        ),
+                      ],
+                    )),
+                Container(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
                         child: Text(
-                          "Get Additional Information",
+                          "Search Engine",
                           style: Theme.of(context).textTheme.subtitle1,
                         ),
                       ),
@@ -1018,150 +830,107 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.black45,
                               icon: Icon(Icons.info),
                               onPressed: () {
-                                _addInfoHelp();
+                                _searchEngineHelp();
                               },
                             ),
                           ),
-                          Switch(
-                            value: _getAddInfo ?? false,
+                          DropdownButton<SearchOption>(
+                            underline: Container(
+                              height: 2,
+                              color: Colors.blue,
+                            ),
+                            value: searchOptionNotifier.searchOption,
                             onChanged: (val) {
-                              setState(() {
-                                _getAddInfo = val;
-                                SharedPreferencesUtils.setAddInfo(val);
-                              });
+                              SharedPreferencesUtils.setSourceOption(val);
+                              searchOptionNotifier.setSearchOption(val);
                             },
-                          )
+                            items: [
+                              DropdownMenuItem<SearchOption>(
+                                value: SearchOption.SauceNao,
+                                child: Text(
+                                    "${searchOptionValues.reverse[SearchOption.SauceNao]}"),
+                              ),
+                              DropdownMenuItem<SearchOption>(
+                                value: SearchOption.Trace,
+                                child: Text(
+                                    "${searchOptionValues.reverse[SearchOption.Trace]}"),
+                              ),
+                            ],
+                          ),
                         ]),
                       ),
                     ],
-                  )),
-              Container(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        "Search Engine",
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
-                    ),
-                    Flexible(
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Flexible(
-                          child: IconButton(
-                            color: Colors.black45,
-                            icon: Icon(Icons.info),
-                            onPressed: () {
-                              _searchEngineHelp();
-                            },
-                          ),
-                        ),
-                        DropdownButton<SearchOption>(
-                          underline: Container(
-                            height: 2,
-                            color: Colors.blue,
-                          ),
-                          value: _searchOption,
-                          onChanged: (val) {
-                            SharedPreferencesUtils.setSourceOption(val);
-                            setState(() {
-                              _searchOption = val;
-                              if (val == SearchOption.SauceNao) {
-                                _expandedTileController =
-                                    ExpandedTileController();
-                                _expandedTileController
-                                    .addListener(_expansionTileListener);
-                              } else {
-                                _expandedTileController = null;
-                              }
-                            });
-                          },
-                          items: [
-                            DropdownMenuItem<SearchOption>(
-                              value: SearchOption.SauceNao,
-                              child: Text(
-                                  "${searchOptionValues.reverse[SearchOption.SauceNao]}"),
-                            ),
-                            DropdownMenuItem<SearchOption>(
-                              value: SearchOption.Trace,
-                              child: Text(
-                                  "${searchOptionValues.reverse[SearchOption.Trace]}"),
-                            ),
-                          ],
-                        ),
-                      ]),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              (_searchOption != SearchOption.SauceNao)
-                  ? SizedBox()
-                  : ExpandedTile(
-                      leading: Checkbox(
-                        tristate: true,
-                        onChanged: (val) {
-                          setState(() {
-                            if (_isAllDB == null || (val ?? false)) {
-                              SharedPreferencesUtils.setAllDB(true);
-                              _isAllDB = true;
-                              _sauceNaoDBMask.updateAll((key, value) => '1');
-                            } else {
-                              SharedPreferencesUtils.setAllDB(false);
-                              _isAllDB = false;
-                              _sauceNaoDBMask.updateAll((key, value) => '0');
-                              //_expandedTileController.expand();
-                            }
-                          });
-                        },
-                        value: _isAllDB,
+                (searchOptionNotifier.searchOption != SearchOption.SauceNao)
+                    ? SizedBox()
+                    : ExpandablePanel(
+                        theme: ExpandableThemeData(
+                            animationDuration: Duration(milliseconds: 150),
+                            useInkWell: true),
+                        controller: _expandableController,
+                        header: ListTile(
+                          leading: Checkbox(
+                            tristate: true,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            onChanged: (val) {
+                              if (searchOptionNotifier.isAllIndexes == null ||
+                                  (val ?? false)) {
+                                SharedPreferencesUtils.setAllIndexes(true);
+                                searchOptionNotifier.isAllIndexes = true;
+                                searchOptionNotifier.setAllSauceNaoMask('1');
+                              } else {
+                                SharedPreferencesUtils.setAllIndexes(false);
+                                searchOptionNotifier.isAllIndexes = false;
+                                searchOptionNotifier.setAllSauceNaoMask('0');
+                              }
+                            },
+                            value: searchOptionNotifier.isAllIndexes,
+                          ),
+                          title: Text("SauceNAO Indexes"),
+                        ),
+                        expanded: Padding(
+                          padding: EdgeInsets.only(left: 16, right: 16),
+                          child: Wrap(
+                            children: searchOptionNotifier.sauceNaoMask.entries
+                                .map((e) {
+                              return Container(
+                                constraints: BoxConstraints(
+                                  maxWidth: _widthConstraint,
+                                ),
+                                padding: EdgeInsets.zero,
+                                margin: EdgeInsets.zero,
+                                child: CheckboxListTile(
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text("${e.key}"),
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    value: (e.value == '1') ? true : false,
+                                    onChanged: (val) {
+                                      SharedPreferencesUtils.setSauceNaoMask(
+                                          e.key, (val) ? '1' : '0');
+                                      searchOptionNotifier.setSauceNaoMask(
+                                          e.key, (val) ? '1' : '0');
+                                    }),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
-                      controller: _expandedTileController,
-                      title: Text("SauceNAO Indexes"),
-                      content: Wrap(
-                        children: _sauceNaoDBMask.entries.map((e) {
-                          var _widthConstraint =
-                              (ScreenUtil.screenWidth - 32) / 3;
-                          if (_widthConstraint < 125)
-                            _widthConstraint =
-                                (ScreenUtil.screenWidth - 32) / 2;
-                          return Container(
-                            constraints: BoxConstraints(
-                              maxWidth: _widthConstraint,
-                            ),
-                            padding: EdgeInsets.zero,
-                            margin: EdgeInsets.zero,
-                            child: CheckboxListTile(
-                                dense: true,
-                                contentPadding: EdgeInsets.zero,
-                                title: Text("${e.key}"),
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                value: (e.value == '1') ? true : false,
-                                onChanged: (val) {
-                                  SharedPreferencesUtils.setSNDBMask(
-                                      e.key, (val) ? '1' : '0');
-                                  setState(() {
-                                    _sauceNaoDBMask[e.key] = (val) ? '1' : '0';
-                                    if (_sauceNaoDBMask.values.contains('0')) {
-                                      _isAllDB = null;
-                                    } else {
-                                      _isAllDB = true;
-                                    }
-                                  });
-                                }),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-            ],
+                SizedBox(
+                  height: (_expandableController.expanded) ? 76 : 0,
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
-  Widget _bab() {
+  Widget _bab(BuildContext context) {
     return BottomAppBar(
       notchMargin: 12,
       shape: CircularNotchedRectangle(),
@@ -1195,54 +964,17 @@ class _HomePageState extends State<HomePage> {
           Container(
             height: 48,
             width: MediaQuery.of(context).size.width / 2 - 42,
-            child: ValueListenableBuilder(
-                valueListenable: _isFailedtoLoad,
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: FlatButton(
-                        child: Container(
-                          height: 48,
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.red,
-                          ),
-                        ),
-                        onPressed: () {
-                          _loadFailed(false);
-                          setState(() {
-                            _image = null;
-                          });
-                        },
-                      ),
-                    ),
-                    Flexible(
-                      child: FlatButton(
-                        child: Container(
-                          height: 48,
-                          child: Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                          ),
-                        ),
-                        onPressed: () {
-                          _editImage();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                builder: (context, isFailed, child) {
-                  return (_image == null || isFailed) ? SizedBox() : child;
-                }),
+            child: ImageControlBar(
+              editImage: _editImage,
+            ),
           )
         ],
       ),
     );
   }
 
-  _expansionTileListener() {
-    if (_expandedTileController.isExpanded) {
+  _expandableListener() {
+    if (_expandableController.expanded) {
       _panelController.open();
     }
   }
@@ -1258,40 +990,18 @@ class _HomePageState extends State<HomePage> {
     ));
   }
 
-  bool _isAllDBBox() {
-    return (_sauceNaoDBMask.values.contains('0')
-        ? ((_sauceNaoDBMask.values.every((element) => element == '0'))
-            ? false
-            : null)
-        : true);
-  }
-
-  _hideBanner() {
-    setState(() {
-      _showBanner = false;
-    });
-  }
-
-  void _initOptions() async {
-    _searchOption = await SharedPreferencesUtils.getSourceOption();
-    _getAddInfo = await SharedPreferencesUtils.getAddInfo();
-    _sauceNaoDBMask =
-        SplayTreeMap.from(await SharedPreferencesUtils.getSNDBMask());
-    _isAllDB = _isAllDBBox();
-    setState(() {});
-  }
-
   @override
   void initState() {
     super.initState();
+    ImageNotifier _imageNotifier =
+        Provider.of<ImageNotifier>(context, listen: false);
+
     // For sharing images coming from outside the app while the app is in the memory
     _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
         .listen((List<SharedMediaFile> value) {
       if (value?.isNotEmpty ?? false) {
         if (value[0].type == SharedMediaType.IMAGE) {
-          setState(() {
-            _image = File(value[0].path);
-          });
+          _imageNotifier.setImage(File(value[0].path));
         } else if (value[0].type == SharedMediaType.VIDEO) {
           _getMedia(videoIntent: File(value[0].path));
         }
@@ -1304,9 +1014,7 @@ class _HomePageState extends State<HomePage> {
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value?.isNotEmpty ?? false) {
         if (value[0].type == SharedMediaType.IMAGE) {
-          setState(() {
-            _image = File(value[0].path);
-          });
+          _imageNotifier.setImage(File(value[0].path));
         } else if (value[0].type == SharedMediaType.VIDEO) {
           _getMedia(videoIntent: File(value[0].path));
         }
@@ -1330,9 +1038,7 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    _expandedTileController.addListener(_expansionTileListener);
-
-    _initOptions();
+    _expandableController.addListener(_expandableListener);
   }
 
   @override
@@ -1348,12 +1054,18 @@ class _HomePageState extends State<HomePage> {
       },
       child: Scaffold(
         key: _scaffoldKey,
-        body: _mainBody(),
-        bottomNavigationBar: _bab(),
-        floatingActionButton: _menuButtons(),
+        body: _mainBody(context),
+        bottomNavigationBar: _bab(context),
+        floatingActionButton: MainButton(
+          getMedia: _getMedia,
+          pickUrl: _pickURL,
+          panelController: _panelController,
+          search: _search,
+        ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         resizeToAvoidBottomInset: false,
         extendBody: true,
+        extendBodyBehindAppBar: true,
       ),
     );
   }
@@ -1362,7 +1074,7 @@ class _HomePageState extends State<HomePage> {
   dispose() {
     _intentDataStreamSubscription.cancel();
     _urlController.dispose();
-    _expandedTileController.dispose();
+    _expandableController.dispose();
     super.dispose();
   }
 }

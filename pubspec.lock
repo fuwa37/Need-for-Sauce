@@ -120,6 +120,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.9"
+  expandable:
+    dependency: "direct main"
+    description:
+      name: expandable
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.1.4"
   extended_image:
     dependency: "direct main"
     description:
@@ -174,13 +181,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_expanded_tile:
-    dependency: "direct main"
-    description:
-      name: flutter_expanded_tile
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.2.1"
   flutter_html:
     dependency: "direct main"
     description:
@@ -303,6 +303,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.9.6+3"
+  nested:
+    dependency: transitive
+    description:
+      name: nested
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.4"
   open_file:
     dependency: "direct main"
     description:
@@ -429,6 +436,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.13"
+  provider:
+    dependency: "direct main"
+    description:
+      name: provider
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.3.1"
   pub_semver:
     dependency: transitive
     description:

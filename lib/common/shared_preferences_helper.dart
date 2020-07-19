@@ -105,7 +105,7 @@ class SharedPreferencesUtils {
     return _prefs;
   }
 
-  static Future<bool> setAllDB(bool val) async {
+  static Future<bool> setAllIndexes(bool val) async {
     var prefs = await getPrefs();
 
     var map = Map.from(indexSauceNaoDB);
@@ -118,30 +118,30 @@ class SharedPreferencesUtils {
         await prefs.setString('dbmask', json.encode(map)));
   }
 
-  static Future<bool> getAllDB() async {
+  static Future<bool> getAllIndexes() async {
     var prefs = await getPrefs();
 
     return prefs.getBool('all_db');
   }
 
-  static Future<bool> removeAllDB() async {
+  static Future<bool> removeAllIndexes() async {
     var prefs = await getPrefs();
 
     return prefs.remove('all_db');
   }
 
-  static Future<bool> setSNDBMask(String db, String value) async {
+  static Future<bool> setSauceNaoMask(String db, String value) async {
     print("$db, $value");
     var prefs = await getPrefs();
 
-    var map = await getSNDBMask();
+    var map = await getSauceNaoMask();
 
     map[db] = value;
 
     return prefs.setString("dbmask", json.encode(map));
   }
 
-  static Future<Map<String, dynamic>> getSNDBMask() async {
+  static Future<Map<String, dynamic>> getSauceNaoMask() async {
     var prefs = await getPrefs();
 
     var map = prefs.getString("dbmask");

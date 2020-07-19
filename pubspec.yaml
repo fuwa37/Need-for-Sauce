@@ -11,7 +11,7 @@ description: Sauce finder.
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.0.3+1
+version: 0.1.0
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
@@ -47,9 +47,10 @@ dependencies:
   get_signature:
     path: plugins/get_signature
   mime: ^0.9.6+3
-  flutter_expanded_tile: ^0.2.1
   flutter_html: ^1.0.0
   cached_video_player: ^1.0.3
+  provider: ^4.3.1
+  expandable: ^4.1.4
 
 dependency_overrides:
   flutter_svg: ^0.18.0
