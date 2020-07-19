@@ -1,8 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:need_for_sauce/pages/editors/video_control.dart';
 import 'dart:io';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:cached_video_player/cached_video_player.dart';
+import 'package:provider/provider.dart';
+import 'package:need_for_sauce/common/notifier.dart' show LoadingNotifier;
+import 'package:need_for_sauce/common/common.dart' show loadingDialog;
+import 'package:need_for_sauce/common/video_control.dart';
+
 
 class VideoCapture extends StatefulWidget {
   final _video;
@@ -26,30 +32,8 @@ class _VideoCaptureState extends State<VideoCapture>
     setState(() {});
   }
 
-  _getThumbnail() async {
-    BuildContext _dialogContext;
-    var thumb;
-
-    showDialog(
-      context: _scaffoldKey.currentContext,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        _dialogContext = context;
-        return WillPopScope(
-          onWillPop: () {
-            _dialogContext = null;
-            return Future.value(true);
-          },
-          child: AlertDialog(
-            title: ListTile(
-              leading: CircularProgressIndicator(),
-              title: Text("Loading..."),
-              subtitle: Text("Press BACK to cancel"),
-            ),
-          ),
-        );
-      },
-    );
+  Future<Uint8List> _thumbnail() async {
+    Uint8List thumb;
 
     try {
       thumb = await VideoThumbnail.thumbnailData(
@@ -68,12 +52,20 @@ class _VideoCaptureState extends State<VideoCapture>
       );
     }
 
-    if (thumb == null) return;
+    return thumb;
+  }
 
-    if (_dialogContext != null) {
-      Navigator.pop(_dialogContext);
-      Navigator.pop(context, thumb);
-    }
+  _getThumbnail() async {
+    loadingDialog(scaffoldContext: _scaffoldKey.currentContext);
+
+    _thumbnail().then((value) {
+      if (value == null) return;
+
+      context.read<LoadingNotifier>().popDialog();
+      Navigator.pop(context, value);
+    }).catchError((onError) {
+      print(onError);
+    });
   }
 
   Future<void> _initVideo() async {
@@ -98,81 +90,81 @@ class _VideoCaptureState extends State<VideoCapture>
           child: FutureBuilder(
             future: _init,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SizedBox();
-              } else {
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        color: Colors.white,
-                        onPressed: () {
-                          setState(() {
-                            if (_videoPlayerController.value.isPlaying) {
-                              _videoPlayerController.pause();
-                            } else {
-                              if (_videoPlayerController.value.position ==
-                                  _videoPlayerController.value.duration) {
-                                _videoPlayerController
-                                    .seekTo(Duration(milliseconds: 0));
-                              }
-                              _videoPlayerController.play();
-                            }
-                          });
-                        },
-                        icon: Icon(
-                          _videoPlayerController.value.isPlaying
-                              ? Icons.pause
-                              : Icons.play_arrow,
-                        ),
-                        tooltip: _videoPlayerController.value.isPlaying
-                            ? 'Pause'
-                            : 'Play',
+              return Padding(
+                padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      color: Colors.white,
+                      onPressed: (_videoPlayerController.value.duration == null)
+                          ? null
+                          : () {
+                              setState(() {
+                                if (_videoPlayerController.value.isPlaying) {
+                                  _videoPlayerController.pause();
+                                } else {
+                                  if (_videoPlayerController.value.position ==
+                                      _videoPlayerController.value.duration) {
+                                    _videoPlayerController
+                                        .seekTo(Duration(milliseconds: 0));
+                                  }
+                                  _videoPlayerController.play();
+                                }
+                              });
+                            },
+                      icon: Icon(
+                        _videoPlayerController.value.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
                       ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            if (_videoPlayerController.value.volume == 0) {
-                              _videoPlayerController.setVolume(100);
-                            } else {
-                              _videoPlayerController.setVolume(0);
-                            }
-                          });
-                        },
-                        icon: Icon(
-                          _videoPlayerController.value.volume == 0
-                              ? Icons.volume_off
-                              : Icons.volume_up,
-                        ),
-                        color: Colors.white,
-                        tooltip: "Mute",
+                      tooltip: _videoPlayerController.value.isPlaying
+                          ? 'Pause'
+                          : 'Play',
+                    ),
+                    IconButton(
+                      onPressed: (_videoPlayerController.value.duration == null)
+                          ? null
+                          : () {
+                              setState(() {
+                                if (_videoPlayerController.value.volume == 0) {
+                                  _videoPlayerController.setVolume(100);
+                                } else {
+                                  _videoPlayerController.setVolume(0);
+                                }
+                              });
+                            },
+                      icon: Icon(
+                        _videoPlayerController.value.volume == 0
+                            ? Icons.volume_off
+                            : Icons.volume_up,
                       ),
-                      Flexible(
-                        fit: FlexFit.tight,
-                        child: Container(
-                          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                          height: 48,
-                          child: MaterialVideoProgressBar(
-                            _videoPlayerController,
-                            colors: ChewieProgressColors(
-                                playedColor: Colors.white,
-                                handleColor: Colors.white,
-                                bufferedColor: Colors.grey,
-                                backgroundColor: Colors.black),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        child: Text(
-                          "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                      color: Colors.white,
+                      tooltip: "Mute",
+                    ),
+                    Flexible(
+                      fit: FlexFit.tight,
+                      child: Container(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                        height: 48,
+                        child: MaterialVideoProgressBar(
+                          _videoPlayerController,
+                          colors: ChewieProgressColors(
+                              playedColor: Colors.white,
+                              handleColor: Colors.white,
+                              bufferedColor: Colors.grey,
+                              backgroundColor: Colors.black),
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }
+                    ),
+                    Container(
+                      child: Text(
+                        "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
         ));

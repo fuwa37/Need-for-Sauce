@@ -71,89 +71,85 @@ class GifCaptureState extends State<GifCapture> with TickerProviderStateMixin {
             child: FutureBuilder(
               future: _init,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SizedBox();
-                } else {
-                  return Row(
-                    children: [
-                      IconButton(
-                        color: Colors.white,
-                        icon: (_animationController?.isAnimating ?? false)
-                            ? Icon(Icons.pause)
-                            : Icon(Icons.play_arrow),
-                        onPressed: (_animationController == null)
-                            ? null
-                            : () {
-                                if (_animationController.isAnimating) {
-                                  setState(() {
-                                    _animationController.stop();
-                                  });
-                                } else {
-                                  if (_animationController.isCompleted) {
-                                    _animationController.forward(from: 0);
-                                  } else {
-                                    _animationController.forward(
-                                        from: ((_imageIdx + 1) /
-                                            _imagesMemory.length));
-                                  }
-                                  if (_isRepeated) {
-                                    _animationController.repeat();
-                                  }
-                                }
-                              },
-                      ),
-                      IconButton(
-                        color: (_isRepeated) ? Colors.white : Colors.black,
-                        icon: Icon(Icons.repeat),
-                        onPressed: (_animationController == null)
-                            ? null
-                            : () {
+                return Row(
+                  children: [
+                    IconButton(
+                      color: Colors.white,
+                      icon: (_animationController?.isAnimating ?? false)
+                          ? Icon(Icons.pause)
+                          : Icon(Icons.play_arrow),
+                      onPressed: (_animationController == null)
+                          ? null
+                          : () {
+                              if (_animationController.isAnimating) {
                                 setState(() {
-                                  _isRepeated = !_isRepeated;
+                                  _animationController.stop();
                                 });
-                                if (_animationController.isAnimating &&
-                                    _isRepeated) {
-                                  _animationController.repeat();
-                                } else if (_animationController.isAnimating &&
-                                    !_isRepeated) {
-                                  _animationController.animateTo(1);
+                              } else {
+                                if (_animationController.isCompleted) {
+                                  _animationController.forward(from: 0);
+                                } else {
+                                  _animationController.forward(
+                                      from: ((_imageIdx + 1) /
+                                          _imagesMemory.length));
                                 }
+                                if (_isRepeated) {
+                                  _animationController.repeat();
+                                }
+                              }
+                            },
+                    ),
+                    IconButton(
+                      color: (_isRepeated) ? Colors.white : Colors.black,
+                      icon: Icon(Icons.repeat),
+                      onPressed: (_animationController == null)
+                          ? null
+                          : () {
+                              setState(() {
+                                _isRepeated = !_isRepeated;
+                              });
+                              if (_animationController.isAnimating &&
+                                  _isRepeated) {
+                                _animationController.repeat();
+                              } else if (_animationController.isAnimating &&
+                                  !_isRepeated) {
+                                _animationController.animateTo(1);
+                              }
+                            },
+                    ),
+                    Flexible(
+                      child: Slider(
+                        activeColor: Colors.white,
+                        inactiveColor: Colors.grey,
+                        onChanged: (_animationController == null)
+                            ? null
+                            : (val) {
+                                setState(() {
+                                  _imageIdx = val.toInt();
+                                });
                               },
+                        onChangeStart: (_animationController == null)
+                            ? null
+                            : (val) {
+                                setState(() {
+                                  _animationController.stop();
+                                });
+                              },
+                        label: "${_imageIdx + 1}",
+                        min: 0,
+                        max: (_animationController == null)
+                            ? 0
+                            : _imagesMemory.length.toDouble() - 1,
+                        value: (_animationController == null)
+                            ? 0
+                            : _imageIdx.toDouble(),
+                        divisions: (_animationController == null)
+                            ? null
+                            : _imagesMemory.length - 1,
                       ),
-                      Flexible(
-                        child: Slider(
-                          activeColor: Colors.white,
-                          inactiveColor: Colors.grey,
-                          onChanged: (_animationController == null)
-                              ? null
-                              : (val) {
-                                  setState(() {
-                                    _imageIdx = val.toInt();
-                                  });
-                                },
-                          onChangeStart: (_animationController == null)
-                              ? null
-                              : (val) {
-                                  setState(() {
-                                    _animationController.stop();
-                                  });
-                                },
-                          label: "${_imageIdx + 1}",
-                          min: 0,
-                          max: (_animationController == null)
-                              ? 0
-                              : _imagesMemory.length.toDouble() - 1,
-                          value: (_animationController == null)
-                              ? 0
-                              : _imageIdx.toDouble(),
-                          divisions: (_animationController == null)
-                              ? null
-                              : _imagesMemory.length - 1,
-                        ),
-                      )
-                    ],
-                  );
-                }
+                    )
+                  ],
+                );
               },
             )));
   }

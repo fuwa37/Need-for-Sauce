@@ -90,7 +90,11 @@ class SearchOptionNotifier extends ChangeNotifier {
   void setSauceNaoMask(String key, String val) {
     sauceNaoMask[key] = val;
     if (sauceNaoMask.values.contains('0')) {
-      isAllIndexes = null;
+      if (sauceNaoMask.values.contains('1')) {
+        isAllIndexes = null;
+      } else {
+        isAllIndexes = false;
+      }
     } else {
       isAllIndexes = true;
     }
@@ -111,6 +115,23 @@ class SearchOptionNotifier extends ChangeNotifier {
     sauceNaoMask =
         SplayTreeMap.from(await SharedPreferencesUtils.getSauceNaoMask());
     isAllIndexes = _isAllIndexes();
+    notifyListeners();
+  }
+}
+
+class GifNotifier extends ChangeNotifier {
+  int imageIdx = 0;
+  bool isRepeated = false;
+
+  void setImageIdx(int idx) {
+    if (imageIdx == idx) return;
+    imageIdx = idx;
+    notifyListeners();
+  }
+
+  void setRepeated(bool val) {
+    if (isRepeated == val) return;
+    isRepeated = val;
     notifyListeners();
   }
 }

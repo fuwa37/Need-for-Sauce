@@ -258,7 +258,7 @@ class NoInfoException implements Exception {
 
   String toString() {
     if (message == null) return "Exception";
-    return "Couldn't get additional info :$message";
+    return "Couldn't get additional info : $message";
   }
 }
 
@@ -280,7 +280,7 @@ class NoResultException implements Exception {
 
   String toString() {
     if (message == null) return "Exception";
-    return "Couldn't get result :$message";
+    return "Couldn't get result : $message";
   }
 }
 
@@ -313,7 +313,7 @@ properImageHelp(BuildContext context, ScrollController _helpController) {
                       style: {
                         'p': Style(
                             fontSize: FontSize(
-                                14 * MediaQuery.of(context).textScaleFactor))
+                                16 * MediaQuery.of(context).textScaleFactor))
                       },
                     )),
               ),

@@ -1,3 +1,9 @@
+## 0.2.0
+
+* App icon added
+* Some UIs change
+* Caching video from network
+
 ## 0.1.0
 
 * An adequate implementation of state management ([Provider](https://pub.dev/packages/provider)), TODO: better implementation

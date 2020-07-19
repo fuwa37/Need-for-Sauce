@@ -1,8 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:need_for_sauce/models/models.dart';
 import 'package:share/share.dart';
@@ -11,6 +9,8 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom hide Text;
+import 'package:cached_video_player/cached_video_player.dart';
+import 'package:need_for_sauce/common/video_control.dart';
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -24,35 +24,125 @@ class SauceDesc extends StatefulWidget {
 }
 
 class SauceDescState extends State<SauceDesc> {
-  VideoPlayerController _videoPlayerController;
-  ChewieController _chewieController;
+  CachedVideoPlayerController _videoPlayerController;
   ScrollController _helpController = ScrollController();
-  Future<void> _future;
+  Future<void> _init;
 
-  Future<void> initVideoPlayer() async {
+  void _videoListener() async {
+    setState(() {});
+  }
+
+  Future<void> _initVideo() async {
+    if (widget.sauce?.videoUrl != null ?? false) {
+      _videoPlayerController =
+          CachedVideoPlayerController.network(widget.sauce.videoUrl);
+    } else {
+      return;
+    }
+    _videoPlayerController.setVolume(0);
     await _videoPlayerController.initialize();
-    setState(() {
-      _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController,
-        aspectRatio: _videoPlayerController.value.aspectRatio,
-        autoPlay: false,
-      );
-    });
+    _videoPlayerController.addListener(_videoListener);
+  }
+
+  Widget _videoBar() {
+    return Container(
+      color: Colors.blue,
+      padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+      child: Row(
+        children: [
+          IconButton(
+            color: Colors.white,
+            onPressed: (_videoPlayerController.value.duration == null)
+                ? null
+                : () {
+                    setState(() {
+                      if (_videoPlayerController.value.isPlaying) {
+                        _videoPlayerController.pause();
+                      } else {
+                        if (_videoPlayerController.value.position ==
+                            _videoPlayerController.value.duration) {
+                          _videoPlayerController
+                              .seekTo(Duration(milliseconds: 0));
+                        }
+                        _videoPlayerController.play();
+                      }
+                    });
+                  },
+            icon: Icon(
+              _videoPlayerController.value.isPlaying
+                  ? Icons.pause
+                  : Icons.play_arrow,
+            ),
+            tooltip: _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
+          ),
+          IconButton(
+            onPressed: (_videoPlayerController.value.duration == null)
+                ? null
+                : () {
+                    setState(() {
+                      if (_videoPlayerController.value.volume == 0) {
+                        _videoPlayerController.setVolume(100);
+                      } else {
+                        _videoPlayerController.setVolume(0);
+                      }
+                    });
+                  },
+            icon: Icon(
+              _videoPlayerController.value.volume == 0
+                  ? Icons.volume_off
+                  : Icons.volume_up,
+            ),
+            color: Colors.white,
+            tooltip: "Mute",
+          ),
+          Flexible(
+            fit: FlexFit.tight,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+              height: 48,
+              child: MaterialVideoProgressBar(
+                _videoPlayerController,
+                colors: ChewieProgressColors(
+                    playedColor: Colors.white,
+                    handleColor: Colors.white,
+                    bufferedColor: Colors.grey,
+                    backgroundColor: Colors.black),
+              ),
+            ),
+          ),
+          Container(
+            child: Text(
+              "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _videoPlayer() {
     return FutureBuilder(
-        future: _future,
+        future: _init,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
             return Center(
               child: CircularProgressIndicator(),
             );
-          return (_chewieController == null)
-              ? _imageShow()
-              : Chewie(
-                  controller: _chewieController,
-                );
+          return (_videoPlayerController.value != null &&
+                  _videoPlayerController.value.initialized)
+              ? Column(
+                  children: [
+                    AspectRatio(
+                      child: CachedVideoPlayer(
+                        _videoPlayerController,
+                      ),
+                      aspectRatio: _videoPlayerController.value.aspectRatio,
+                    ),
+                    _videoBar()
+                  ],
+                )
+              : _imageShow();
         });
   }
 
@@ -99,22 +189,14 @@ class SauceDescState extends State<SauceDesc> {
                   style: {
                     'p': Style(
                         fontSize: FontSize(
-                            14 * MediaQuery.of(context).textScaleFactor)),
+                            15 * MediaQuery.of(context).textScaleFactor)),
                     'code': Style(
                         fontSize: FontSize(
-                            10 * MediaQuery.of(context).textScaleFactor)),
+                            12 * MediaQuery.of(context).textScaleFactor)),
                   },
                 ))),
       ],
     );
-  }
-
-  Widget _noConn() {
-    return Scaffold(
-        appBar: AppBar(),
-        body: Center(
-          child: Text("No connection to server"),
-        ));
   }
 
   String removeAllHtmlTags(String htmlString) {
@@ -134,45 +216,38 @@ class SauceDescState extends State<SauceDesc> {
   @override
   void initState() {
     super.initState();
-    if (widget.sauce?.videoUrl != null ?? false) {
-      _videoPlayerController =
-          VideoPlayerController.network(widget.sauce.videoUrl);
-      _future = initVideoPlayer();
-    }
+    _init = _initVideo();
   }
 
   @override
   Widget build(BuildContext context) {
-    return (widget.sauce == null)
-        ? _noConn()
-        : Scaffold(
-            appBar: AppBar(
-              title: (widget?.sauce?.sauceStatus ?? true)
-                  ? Text(
-                      widget.sauce.title,
-                      softWrap: true,
-                    )
-                  : null,
-              actions: [
-                IconButton(
-                  tooltip: "Share",
-                  onPressed: () {
-                    Share.share(removeAllHtmlTags(widget.sauce.reply));
-                  },
-                  icon: Icon(Icons.share),
-                )
-              ],
-            ),
-            body: SingleChildScrollView(
-              child: sauceResult(),
-            ),
-          );
+    return Scaffold(
+      appBar: AppBar(
+        title: (widget?.sauce?.sauceStatus ?? true)
+            ? Text(
+                widget.sauce.title,
+                softWrap: true,
+              )
+            : null,
+        actions: [
+          IconButton(
+            tooltip: "Share",
+            onPressed: () {
+              Share.share(removeAllHtmlTags(widget.sauce.reply));
+            },
+            icon: Icon(Icons.share),
+          )
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: sauceResult(),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _videoPlayerController?.dispose();
-    _chewieController?.dispose();
     super.dispose();
   }
 }

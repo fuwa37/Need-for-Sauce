@@ -476,7 +476,7 @@ class _HomePageState extends State<HomePage> {
                         style: {
                           'p': Style(
                               fontSize: FontSize(
-                                  14 * MediaQuery.of(context).textScaleFactor))
+                                  16 * MediaQuery.of(context).textScaleFactor))
                         },
                       )),
                   action: null);
@@ -633,7 +633,7 @@ class _HomePageState extends State<HomePage> {
                         style: {
                           'p': Style(
                               fontSize: FontSize(
-                                  14 * MediaQuery.of(context).textScaleFactor))
+                                  16 * MediaQuery.of(context).textScaleFactor))
                         },
                       )),
                 ),
@@ -673,7 +673,7 @@ class _HomePageState extends State<HomePage> {
                         <p>Refer to <a href='https://saucenao.com/status.html'>Indexing Status</a> for why some indexes have not option in this app.</p>
                         <p>For more information: <a href='https://saucenao.com/about.html'>About SauceNAO</a></p>
                         <hr>
-                        <p><a href='https://trace.moe/'><b>Trace</b></a>: Trace or WAIT(What Anime Is This?) is search engine for anime. Performs relatively better for searching anime and will return short video.
+                        <p><a href='https://trace.moe/'><b>Trace</b></a>: Trace or WAIT(What Anime Is This?) is search engine for anime. Performs relatively better for searching anime and will return short video if available otherwise an image.
                         <p>For more information: <a href='https://trace.moe/about'>About Trace(WAIT)</a></p>
                         """,
                         onLinkTap: (url) {
@@ -683,7 +683,7 @@ class _HomePageState extends State<HomePage> {
                         style: {
                           'p': Style(
                               fontSize: FontSize(
-                                  14 * MediaQuery.of(context).textScaleFactor))
+                                  16 * MediaQuery.of(context).textScaleFactor))
                         },
                       )),
                 ),
@@ -890,7 +890,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                           title: Text("SauceNAO Indexes"),
                         ),
-                        expanded: Padding(
+                        expanded: Container(
+                          color: Colors.grey.withOpacity(0.25),
                           padding: EdgeInsets.only(left: 16, right: 16),
                           child: Wrap(
                             children: searchOptionNotifier.sauceNaoMask.entries
@@ -943,6 +944,14 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               if (_panelController.isPanelClosed) {
                 _panelController.animatePanelToSnapPoint();
+              } else {
+                _panelController.close();
+              }
+            },
+            onLongPress: () {
+              if (_panelController.isPanelClosed) {
+                _panelController.open();
+                _expandableController.value = true;
               } else {
                 _panelController.close();
               }
