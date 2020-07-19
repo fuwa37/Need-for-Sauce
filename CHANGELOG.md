@@ -1,3 +1,8 @@
+## 0.1.0
+
+* An adequate implementation of state management ([Provider](https://pub.dev/packages/provider)), TODO: better implementation
+* Fix multiple instance run when receiving intent
+
 ## 0.0.3
 
 * Change Markdown to HTML for several text views
