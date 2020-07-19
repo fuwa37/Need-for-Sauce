@@ -2,6 +2,7 @@
 
 * An adequate implementation of state management ([Provider](https://pub.dev/packages/provider)), TODO: better implementation
 * Fix multiple instance run when receiving intent
+* Fix some UIs
 
 ## 0.0.3
 
