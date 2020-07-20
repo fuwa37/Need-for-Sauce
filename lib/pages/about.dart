@@ -326,10 +326,6 @@ class _AboutPageState extends State<AboutPage> {
           }
         }
 
-        apkURL =
-            "https://github.com/irs37/Need-for-Sauce/releases/download/v0.1.0/need_for_sauce-arm-v0.1.0.apk";
-        apkSize = "10000";
-
         if (apkURL == null) {
           if (defaultAPKAsset == null) {
             throw NoSupportedApkException("No supported APK");
