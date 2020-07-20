@@ -11,6 +11,8 @@ import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom hide Text;
 import 'package:cached_video_player/cached_video_player.dart';
 import 'package:need_for_sauce/common/video_control.dart';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -23,12 +25,16 @@ class SauceDesc extends StatefulWidget {
   }
 }
 
-class SauceDescState extends State<SauceDesc> {
+class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   CachedVideoPlayerController _videoPlayerController;
   ScrollController _helpController = ScrollController();
   Future<void> _init;
 
   void _videoListener() async {
+    if (_videoPlayerController.value.position ==
+        _videoPlayerController.value.duration) {
+      print("completed");
+    }
     setState(() {});
   }
 
@@ -41,6 +47,7 @@ class SauceDescState extends State<SauceDesc> {
     }
     _videoPlayerController.setVolume(0);
     _videoPlayerController.addListener(_videoListener);
+    _videoPlayerController.setLooping(true);
     try {
       await _videoPlayerController.initialize();
     } on Exception catch (e) {
@@ -129,24 +136,24 @@ class SauceDescState extends State<SauceDesc> {
     return FutureBuilder(
         future: _init.timeout(Duration(seconds: 15)),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
-            return Center(
-              child: CircularProgressIndicator(),
-            );
           if (snapshot.hasError) {
             return _imageShow();
           }
-          return Column(
-            children: [
-              AspectRatio(
-                child: CachedVideoPlayer(
-                  _videoPlayerController,
-                ),
-                aspectRatio: _videoPlayerController.value.aspectRatio,
-              ),
-              _videoBar()
-            ],
-          );
+          return (_videoPlayerController.value.initialized)
+              ? Column(
+                  children: [
+                    AspectRatio(
+                      child: CachedVideoPlayer(
+                        _videoPlayerController,
+                      ),
+                      aspectRatio: _videoPlayerController.value.aspectRatio,
+                    ),
+                    _videoBar()
+                  ],
+                )
+              : Center(
+                  child: CircularProgressIndicator(),
+                );
         });
   }
 
