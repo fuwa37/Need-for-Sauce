@@ -10,6 +10,9 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:package_info/package_info.dart';
+import 'package:mime/mime.dart';
 
 class FlatButtonWithIcon extends FlatButton with MaterialButtonWithIconMixin {
   FlatButtonWithIcon({
@@ -391,4 +394,20 @@ double mapRange(
     @required double x2,
     @required double y2}) {
   return (input - x1) / (y1 - x1) * (y2 - x2) + x2;
+}
+
+void deleteObsoleteApk() async {
+  Directory temp = await getTemporaryDirectory();
+
+  temp.listSync().forEach((element) {
+    var fileType = lookupMimeType(element.path);
+    if (fileType.contains("application")) {
+      print("Delete ${element.path}");
+      File(element.path).delete();
+    }
+  });
+}
+
+Future<PackageInfo> appInfo() async {
+  return await PackageInfo.fromPlatform();
 }

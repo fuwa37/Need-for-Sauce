@@ -1045,6 +1045,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    deleteObsoleteApk();
+
     _rotateAnimationController = AnimationController(
         duration: const Duration(milliseconds: 100), vsync: this);
 

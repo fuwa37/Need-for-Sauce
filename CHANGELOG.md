@@ -1,3 +1,8 @@
+## 0.3.1
+
+* Fix download
+* Delete obsolete downloaded APKs
+
 ## 0.3.0
 
 * Add About page
