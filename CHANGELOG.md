@@ -1,3 +1,10 @@
+## 0.3.0
+
+* Add About page
+* Add "check new version" & download from app
+* Replace Trace result's broken video with image
+* Some UIs change
+
 ## 0.2.0
 
 * App icon added

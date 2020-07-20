@@ -9,7 +9,7 @@ Sauce finder
 * [ ] Implement on-the-air update (auto-updater)
 * [x] ~~App's icon~~
 * [ ] **Better app's icon**
-* [ ] App's about page
+* [x] ~~App's about page~~
 * [ ] Search's history
 * [ ] **Better state management**
 * [ ] **Refactoring**

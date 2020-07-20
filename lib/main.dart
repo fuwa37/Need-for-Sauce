@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +18,7 @@ import 'package:need_for_sauce/models/models.dart';
 import 'package:need_for_sauce/pages/sauce.dart';
 import 'package:need_for_sauce/pages/editors/video_capture.dart';
 import 'package:need_for_sauce/common/shared_preferences_helper.dart';
+import 'package:need_for_sauce/pages/about.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:need_for_sauce/pages/editors/gif_capture.dart';
 import 'package:path/path.dart' as path;
@@ -33,6 +35,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart';
+import 'package:rect_getter/rect_getter.dart';
 
 void main() => runApp(ChangeNotifierProvider(
     create: (context) => LoadingNotifier(), child: MyApp()));
@@ -63,7 +66,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription _intentDataStreamSubscription;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _urlController = TextEditingController();
@@ -71,6 +74,10 @@ class _HomePageState extends State<HomePage> {
   PanelController _panelController = PanelController();
   ScrollController _helpController = ScrollController();
   ExpandableController _expandableController = ExpandableController();
+  var _optionKey = RectGetter.createGlobalKey();
+  ValueNotifier<double> _paddingOption = ValueNotifier(0);
+  AnimationController _rotateAnimationController;
+  Animation<double> _rotateAnimation;
 
   _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
@@ -519,13 +526,10 @@ class _HomePageState extends State<HomePage> {
               print(e);
             }
           } else {
-            _showSnackBar("Select at least one index",
-                act: SnackBarAction(
-                  label: "DISMISS",
-                  onPressed: () {
-                    _scaffoldKey.currentState.removeCurrentSnackBar();
-                  },
-                ));
+            showSnackBar(
+                msg: "Select at least one index",
+                state: _scaffoldKey.currentState,
+                dur: Duration(seconds: 2));
             _panelController.open();
             _expandableController.expanded = true;
           }
@@ -720,6 +724,20 @@ class _HomePageState extends State<HomePage> {
           )),
       backdropEnabled: true,
       controller: _panelController,
+      onPanelSlide: (val) {
+        double h = RectGetter.getRectFromKey(_optionKey).height;
+        double botpad = 76;
+        if (_expandableController.expanded && val != 1.0) {
+          _paddingOption.value = h - h / 2 + botpad;
+        } else if (_expandableController.expanded && val >= 0.5) {
+          _paddingOption.value = botpad;
+        }
+        if (val >= 0.5) {
+          _rotateAnimationController.animateTo(
+              mapRange(input: val, x1: 0.5, y1: 1.0, x2: 0.0, y2: 1.0),
+              duration: Duration.zero);
+        }
+      },
       onPanelClosed: () {
         try {
           _expandableController?.expanded = false;
@@ -743,7 +761,7 @@ class _HomePageState extends State<HomePage> {
                 child: ListTile(
                   onTap: () {
                     if (_panelController.isPanelOpen) {
-                      _panelController.close();
+                      _panelController.animatePanelToSnapPoint();
                     } else {
                       _panelController.open();
                     }
@@ -755,17 +773,34 @@ class _HomePageState extends State<HomePage> {
                         fontSize: 20,
                         color: Colors.white),
                   ),
+                  leading: RotationTransition(
+                    turns: Tween<double>(begin: 0.0, end: 0.5)
+                        .animate(_rotateAnimationController),
+                    child: Icon(
+                      Icons.arrow_drop_up,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-              // MaterialButton(
-              //   shape: CircleBorder(),
-              //   onPressed: () {
-              //     Navigator.push(context, MaterialPageRoute(builder: (context) {
-              //       return AboutPage();
-              //     }));
-              //   },
-              //   child: Icon(Icons.info_outline),
-              // ),
+              Material(
+                color: Colors.transparent,
+                child: IconButton(
+                  tooltip: "About",
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return AboutPage();
+                    }));
+                  },
+                  icon: Icon(
+                    Icons.info_outline,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
             ],
           )),
       renderPanelSheet: true,
@@ -774,159 +809,176 @@ class _HomePageState extends State<HomePage> {
         var _widthConstraint = (ScreenUtil.screenWidth - 32) / 3;
         if (_widthConstraint < 125)
           _widthConstraint = (ScreenUtil.screenWidth - 32) / 2;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(0, 56, 0, 0),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Container(
-                    padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            "Get Additional Information",
-                            style: Theme.of(context).textTheme.subtitle1,
-                          ),
-                        ),
-                        Flexible(
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+        return RectGetter(
+            key: _optionKey,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(0, 56, 0, 0),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Container(
+                        padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Flexible(
-                              child: IconButton(
-                                color: Colors.black45,
-                                icon: const Icon(Icons.info),
-                                onPressed: () {
-                                  _addInfoHelp();
-                                },
+                              child: Text(
+                                "Get Additional Information",
+                                style: Theme.of(context).textTheme.subtitle1,
                               ),
                             ),
-                            Switch(
-                              value: searchOptionNotifier.getAddInfo ?? false,
-                              onChanged: (val) {
-                                searchOptionNotifier.setGetAddInfo(val);
-                                SharedPreferencesUtils.setAddInfo(val);
-                              },
-                            )
-                          ]),
-                        ),
-                      ],
-                    )),
-                Container(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          "Search Engine",
-                          style: Theme.of(context).textTheme.subtitle1,
-                        ),
-                      ),
-                      Flexible(
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Flexible(
+                              child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: IconButton(
+                                        tooltip: "Help",
+                                        color: Colors.black45,
+                                        icon: const Icon(Icons.info),
+                                        onPressed: () {
+                                          _addInfoHelp();
+                                        },
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: searchOptionNotifier.getAddInfo ??
+                                          false,
+                                      onChanged: (val) {
+                                        searchOptionNotifier.setGetAddInfo(val);
+                                        SharedPreferencesUtils.setAddInfo(val);
+                                      },
+                                    )
+                                  ]),
+                            ),
+                          ],
+                        )),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Flexible(
-                            child: IconButton(
-                              color: Colors.black45,
-                              icon: Icon(Icons.info),
-                              onPressed: () {
-                                _searchEngineHelp();
-                              },
+                            child: Text(
+                              "Search Engine",
+                              style: Theme.of(context).textTheme.subtitle1,
                             ),
                           ),
-                          DropdownButton<SearchOption>(
-                            underline: Container(
-                              height: 2,
-                              color: Colors.blue,
-                            ),
-                            value: searchOptionNotifier.searchOption,
-                            onChanged: (val) {
-                              SharedPreferencesUtils.setSourceOption(val);
-                              searchOptionNotifier.setSearchOption(val);
-                            },
-                            items: [
-                              DropdownMenuItem<SearchOption>(
-                                value: SearchOption.SauceNao,
-                                child: Text(
-                                    "${searchOptionValues.reverse[SearchOption.SauceNao]}"),
-                              ),
-                              DropdownMenuItem<SearchOption>(
-                                value: SearchOption.Trace,
-                                child: Text(
-                                    "${searchOptionValues.reverse[SearchOption.Trace]}"),
-                              ),
-                            ],
-                          ),
-                        ]),
-                      ),
-                    ],
-                  ),
-                ),
-                (searchOptionNotifier.searchOption != SearchOption.SauceNao)
-                    ? SizedBox()
-                    : ExpandablePanel(
-                        theme: ExpandableThemeData(
-                            animationDuration: Duration(milliseconds: 150),
-                            useInkWell: true),
-                        controller: _expandableController,
-                        header: ListTile(
-                          leading: Checkbox(
-                            tristate: true,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            onChanged: (val) {
-                              if (searchOptionNotifier.isAllIndexes == null ||
-                                  (val ?? false)) {
-                                SharedPreferencesUtils.setAllIndexes(true);
-                                searchOptionNotifier.isAllIndexes = true;
-                                searchOptionNotifier.setAllSauceNaoMask('1');
-                              } else {
-                                SharedPreferencesUtils.setAllIndexes(false);
-                                searchOptionNotifier.isAllIndexes = false;
-                                searchOptionNotifier.setAllSauceNaoMask('0');
-                              }
-                            },
-                            value: searchOptionNotifier.isAllIndexes,
-                          ),
-                          title: Text("SauceNAO Indexes"),
-                        ),
-                        expanded: Container(
-                          color: Colors.grey.withOpacity(0.25),
-                          padding: EdgeInsets.only(left: 16, right: 16),
-                          child: Wrap(
-                            children: searchOptionNotifier.sauceNaoMask.entries
-                                .map((e) {
-                              return Container(
-                                constraints: BoxConstraints(
-                                  maxWidth: _widthConstraint,
+                          Flexible(
+                            child:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              Flexible(
+                                child: IconButton(
+                                  tooltip: "Help",
+                                  color: Colors.black45,
+                                  icon: Icon(Icons.info),
+                                  onPressed: () {
+                                    _searchEngineHelp();
+                                  },
                                 ),
-                                padding: EdgeInsets.zero,
-                                margin: EdgeInsets.zero,
-                                child: CheckboxListTile(
-                                    dense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                    title: Text("${e.key}"),
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
-                                    value: (e.value == '1') ? true : false,
-                                    onChanged: (val) {
-                                      SharedPreferencesUtils.setSauceNaoMask(
-                                          e.key, (val) ? '1' : '0');
-                                      searchOptionNotifier.setSauceNaoMask(
-                                          e.key, (val) ? '1' : '0');
-                                    }),
-                              );
-                            }).toList(),
+                              ),
+                              DropdownButton<SearchOption>(
+                                underline: Container(
+                                  height: 2,
+                                  color: Colors.blue,
+                                ),
+                                value: searchOptionNotifier.searchOption,
+                                onChanged: (val) {
+                                  SharedPreferencesUtils.setSourceOption(val);
+                                  searchOptionNotifier.setSearchOption(val);
+                                },
+                                items: [
+                                  DropdownMenuItem<SearchOption>(
+                                    value: SearchOption.SauceNao,
+                                    child: Text(
+                                        "${searchOptionValues.reverse[SearchOption.SauceNao]}"),
+                                  ),
+                                  DropdownMenuItem<SearchOption>(
+                                    value: SearchOption.Trace,
+                                    child: Text(
+                                        "${searchOptionValues.reverse[SearchOption.Trace]}"),
+                                  ),
+                                ],
+                              ),
+                            ]),
                           ),
-                        ),
+                        ],
                       ),
-                SizedBox(
-                  height: (_expandableController.expanded) ? 76 : 0,
+                    ),
+                    (searchOptionNotifier.searchOption != SearchOption.SauceNao)
+                        ? SizedBox()
+                        : ExpandablePanel(
+                            theme: ExpandableThemeData(
+                                animationDuration: Duration(milliseconds: 150),
+                                useInkWell: true),
+                            controller: _expandableController,
+                            header: ListTile(
+                              leading: Checkbox(
+                                tristate: true,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onChanged: (val) {
+                                  if (searchOptionNotifier.isAllIndexes ==
+                                          null ||
+                                      (val ?? false)) {
+                                    SharedPreferencesUtils.setAllIndexes(true);
+                                    searchOptionNotifier.isAllIndexes = true;
+                                    searchOptionNotifier
+                                        .setAllSauceNaoMask('1');
+                                  } else {
+                                    SharedPreferencesUtils.setAllIndexes(false);
+                                    searchOptionNotifier.isAllIndexes = false;
+                                    searchOptionNotifier
+                                        .setAllSauceNaoMask('0');
+                                  }
+                                },
+                                value: searchOptionNotifier.isAllIndexes,
+                              ),
+                              title: Text("SauceNAO Indexes"),
+                            ),
+                            expanded: Container(
+                              color: Colors.grey.withOpacity(0.25),
+                              padding: EdgeInsets.only(left: 16, right: 16),
+                              child: Wrap(
+                                children: searchOptionNotifier
+                                    .sauceNaoMask.entries
+                                    .map((e) {
+                                  return Container(
+                                    constraints: BoxConstraints(
+                                      maxWidth: _widthConstraint,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    margin: EdgeInsets.zero,
+                                    child: CheckboxListTile(
+                                        dense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                        title: Text("${e.key}"),
+                                        controlAffinity:
+                                            ListTileControlAffinity.leading,
+                                        value: (e.value == '1') ? true : false,
+                                        onChanged: (val) {
+                                          SharedPreferencesUtils
+                                              .setSauceNaoMask(
+                                                  e.key, (val) ? '1' : '0');
+                                          searchOptionNotifier.setSauceNaoMask(
+                                              e.key, (val) ? '1' : '0');
+                                        }),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                    ValueListenableBuilder(
+                        valueListenable: _paddingOption,
+                        builder: (context, value, child) {
+                          return SizedBox(
+                            height: _paddingOption.value,
+                          );
+                        }),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        );
+              ),
+            ));
       }),
     );
   }
@@ -985,23 +1037,17 @@ class _HomePageState extends State<HomePage> {
   _expandableListener() {
     if (_expandableController.expanded) {
       _panelController.open();
+    } else {
+      _paddingOption.value = 0;
     }
-  }
-
-  _showSnackBar(String msg,
-      {SnackBarAction act, Duration dur = const Duration(seconds: 2)}) {
-    _scaffoldKey.currentState.removeCurrentSnackBar();
-    _scaffoldKey.currentState.showSnackBar(SnackBar(
-      content: Text("$msg"),
-      behavior: SnackBarBehavior.floating,
-      action: act,
-      duration: dur,
-    ));
   }
 
   @override
   void initState() {
     super.initState();
+    _rotateAnimationController = AnimationController(
+        duration: const Duration(milliseconds: 100), vsync: this);
+
     ImageNotifier _imageNotifier =
         Provider.of<ImageNotifier>(context, listen: false);
 

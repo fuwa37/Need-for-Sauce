@@ -40,8 +40,12 @@ class SauceDescState extends State<SauceDesc> {
       return;
     }
     _videoPlayerController.setVolume(0);
-    await _videoPlayerController.initialize();
     _videoPlayerController.addListener(_videoListener);
+    try {
+      await _videoPlayerController.initialize();
+    } on Exception catch (e) {
+      print(e);
+    }
   }
 
   Widget _videoBar() {
@@ -123,42 +127,66 @@ class SauceDescState extends State<SauceDesc> {
 
   Widget _videoPlayer() {
     return FutureBuilder(
-        future: _init,
+        future: _init.timeout(Duration(seconds: 15)),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
             return Center(
               child: CircularProgressIndicator(),
             );
-          return (_videoPlayerController.value != null &&
-                  _videoPlayerController.value.initialized)
-              ? Column(
-                  children: [
-                    AspectRatio(
-                      child: CachedVideoPlayer(
-                        _videoPlayerController,
-                      ),
-                      aspectRatio: _videoPlayerController.value.aspectRatio,
-                    ),
-                    _videoBar()
-                  ],
-                )
-              : _imageShow();
+          if (snapshot.hasError) {
+            return _imageShow();
+          }
+          return Column(
+            children: [
+              AspectRatio(
+                child: CachedVideoPlayer(
+                  _videoPlayerController,
+                ),
+                aspectRatio: _videoPlayerController.value.aspectRatio,
+              ),
+              _videoBar()
+            ],
+          );
         });
   }
 
   Widget _imageShow() {
     return ExtendedImage(
-      image: imageProvider(widget.sauce.imageUrl),
-      fit: BoxFit.fitWidth,
-      mode: ExtendedImageMode.none,
-      enableLoadState: true,
-    );
+        image: imageProvider(widget.sauce.imageUrl),
+        fit: BoxFit.fitWidth,
+        mode: ExtendedImageMode.none,
+        enableLoadState: true,
+        loadStateChanged: (ExtendedImageState state) {
+          switch (state.extendedImageLoadState) {
+            case LoadState.loading:
+              {
+                return Center(child: CircularProgressIndicator());
+              }
+            case LoadState.completed:
+              {
+                return ExtendedRawImage(
+                  image: state.extendedImageInfo?.image,
+                  fit: BoxFit.fitWidth,
+                );
+              }
+            case LoadState.failed:
+              {
+                return Center(
+                  child: Text("Failed to load image"),
+                );
+              }
+            default:
+              {
+                return Text("Failed");
+              }
+          }
+        });
   }
 
   Widget sauceResult() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
+      children: [
         (widget.sauce.videoUrl == null)
             ? (widget.sauce.imageUrl == null) ? Container() : _imageShow()
             : _videoPlayer(),

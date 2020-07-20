@@ -284,6 +284,17 @@ class NoResultException implements Exception {
   }
 }
 
+class NoSupportedApkException implements Exception {
+  String message;
+
+  NoSupportedApkException([this.message]);
+
+  String toString() {
+    if (message == null) return "Exception";
+    return "$message";
+  }
+}
+
 properImageHelp(BuildContext context, ScrollController _helpController) {
   showDialog(
       context: context,
@@ -357,4 +368,27 @@ loadingDialog({@required BuildContext scaffoldContext, CancelToken token}) {
       );
     },
   );
+}
+
+showSnackBar(
+    {@required String msg,
+    @required ScaffoldState state,
+    SnackBarAction act,
+    Duration dur = const Duration(seconds: 4)}) {
+  state?.removeCurrentSnackBar();
+  state?.showSnackBar(SnackBar(
+    content: Text("$msg"),
+    behavior: SnackBarBehavior.floating,
+    action: act,
+    duration: dur,
+  ));
+}
+
+double mapRange(
+    {@required double input,
+    @required double x1,
+    @required double y1,
+    @required double x2,
+    @required double y2}) {
+  return (input - x1) / (y1 - x1) * (y2 - x2) + x2;
 }
