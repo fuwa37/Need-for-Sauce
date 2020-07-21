@@ -1,6 +1,11 @@
+## 0.3.5
+
+* Fix result link that can't be opened
+* Exposes link on share
+
 ## 0.3.4
 
-* Fix nhentai search string
+* Fix hentai manga additional info
 
 ## 0.3.3
 

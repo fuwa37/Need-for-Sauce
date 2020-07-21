@@ -253,7 +253,8 @@ class SauceNaoPawoo35 extends SauceNaoResultDataAbstract {
 
   Map<String, dynamic> toJsonHtml() => {
         "<b>Pawoo ID</b>": "<a href=${extUrls[0]}/$pawooId>$pawooId</a>",
-        "<b>Author</b>": "$pawooUserDisplayName(<a href=${extUrls[0]}>@$pawooUserAcct</a>)",
+        "<b>Author</b>":
+            "$pawooUserDisplayName(<a href=${extUrls[0]}>@$pawooUserAcct</a>)",
       };
 }
 
@@ -474,7 +475,9 @@ class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
         "": "<h3>$source</h3>",
         "<b>Episode</b>": part,
         "<b>Time</b>": estTime,
-        "<b>IMDB Link</b>": "<a href=${extUrls[0]}>$imdbId</a>"
+        "<b>IMDB Link</b>": (extUrls[0] == null)
+            ? null
+            : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
 }
 
@@ -609,7 +612,8 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
 
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$source</br>$engName</br>$jpName</h3>",
-        "<b>ID</b>": (id == null) ? null : "<a href=https://nhentai.net/g/$id>#$id</a>",
+        "<b>ID</b>":
+            (id == null) ? null : "<a href=https://nhentai.net/g/$id>#$id</a>",
         "<b>Page</b>": page,
         "<b>Creator(s)</b>": creator?.join(', '),
         "<b>Total Pages</b>": numPages,
@@ -781,7 +785,8 @@ class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>Member</b>": "<a href=$memberLink>$memberName</a>",
-        "<b>Link</b>": url == null ? null : "<a href=$url>${getHostName(url)}</a>"
+        "<b>Link</b>":
+            url == null ? null : "<a href=$url>${getHostName(url)}</a>"
       };
 }
 
@@ -889,17 +894,20 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
             sankakuId == null ? null : "<a href=${extUrls[0]}>$gelbooruId</a>",
         "<b>Konachan ID</b>":
             konachanId == null ? null : "<a href=${extUrls[0]}>$konachanId</a>",
-        "<b>Anime-Pictures ID</b>": apId == null ? null : "<a href=${extUrls[0]}>$apId</a>",
-        "<b>e621 ID</b>": e621Id == null ? null : "<a href=${extUrls[0]}>$e621Id</a>",
+        "<b>Anime-Pictures ID</b>":
+            apId == null ? null : "<a href=${extUrls[0]}>$apId</a>",
+        "<b>e621 ID</b>":
+            e621Id == null ? null : "<a href=${extUrls[0]}>$e621Id</a>",
         "<b>Idol Complex ID</b>":
             idolId == null ? null : "<a href=${extUrls[0]}>$idolId</a>",
         "<b>Creator(s)</b>": creator,
         "<b>Material(s)</b>": material,
-        "<b>Character(s)</b>": characters,
+        "<b>Character(s)</b>":
+            (characters?.isEmpty ?? true) ? null : characters,
         "<b>Alt. Source</b>": source == null
             ? null
             : Uri.parse(source).isAbsolute
-                ? "<a href=${getHostName(source)}>${getSourceUrl(source)}</a>"
+                ? "<a href=${getSourceUrl(source)}>${getHostName(source)}</a>"
                 : null,
       };
 }

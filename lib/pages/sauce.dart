@@ -209,6 +209,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                       """
                       : widget.sauce.reply,
                   onLinkTap: (url) {
+                    print(url);
                     canLaunch(url).then((value) {
                       if (value) {
                         launch(url);
@@ -234,8 +235,20 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
 
   String removeAllHtmlTags(String htmlString) {
     List<String> cleanStrings = new List<String>();
-    dom.Document parsed = parser.parse(
-        htmlString.replaceAll('</br>', '</p><p>').replaceAll('<h3>', '<p>'));
+    String replaced =
+        htmlString.replaceAll('</br>', '</p><p>').replaceAll('<h3>', '<p>');
+    dom.Document parsed = parser.parse(replaced);
+    List<dom.Element> links = parsed.querySelectorAll('a');
+
+    if (links.isNotEmpty) {
+      links.forEach((element) {
+        var link = element.attributes["href"];
+        replaced = replaced.replaceAll(element.text, link);
+      });
+    }
+
+    parsed = parser.parse(replaced);
+
     List<dom.Element> ps = parsed.querySelectorAll('p');
 
     if (ps.isNotEmpty)
