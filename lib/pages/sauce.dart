@@ -11,8 +11,6 @@ import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom hide Text;
 import 'package:cached_video_player/cached_video_player.dart';
 import 'package:need_for_sauce/common/video_control.dart';
-import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;

@@ -77,7 +77,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   var _optionKey = RectGetter.createGlobalKey();
   ValueNotifier<double> _paddingOption = ValueNotifier(0);
   AnimationController _rotateAnimationController;
-  Animation<double> _rotateAnimation;
 
   _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());

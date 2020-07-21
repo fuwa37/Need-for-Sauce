@@ -42,6 +42,7 @@ class ErrorBanner extends StatelessWidget {
                               FlatButton(
                                 child: Text("RETRY"),
                                 onPressed: () {
+                                  errorBannerNotifier.setPop(false);
                                   loadingNotifier.setLoad(true);
                                   search();
                                 },

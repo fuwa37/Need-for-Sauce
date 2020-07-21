@@ -1,3 +1,7 @@
+## 0.3.3
+
+* Fix pop banner
+
 ## 0.3.2
 
 * Fix video result
