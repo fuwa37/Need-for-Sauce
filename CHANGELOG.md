@@ -1,3 +1,7 @@
+## 0.3.4
+
+* Fix nhentai search string
+
 ## 0.3.3
 
 * Fix pop banner
