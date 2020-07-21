@@ -1,6 +1,13 @@
 # Need for Sauce
 
-Sauce finder
+Search for source of anime, manga, artwork and many more.
+
+Use:
+
+[Trace](https://trace.moe/)
+
+[SauceNAO](https://saucenao.com/)
+
 
 **TODO:**
 
