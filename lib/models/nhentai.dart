@@ -89,7 +89,7 @@ class NhentaiResult {
 
     try {
       response = await Sauce.nhentai().get(
-          '/api/galleries/search?query=${Uri.encodeQueryComponent(source.replaceAll(RegExp(r'\s-'), ' '))}');
+          '/api/galleries/search?query=${Uri.encodeQueryComponent(source.replaceAll(RegExp(r'\s-'), ' ').replaceAll(RegExp(r'(?<=\s)(_*?)(?=\s)'), '|'))}');
     } on DioError catch (e) {
       switch (e.type) {
         case DioErrorType.RECEIVE_TIMEOUT:
