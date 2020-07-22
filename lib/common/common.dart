@@ -401,7 +401,7 @@ void deleteObsoleteApk() async {
 
   temp.listSync().forEach((element) {
     var fileType = lookupMimeType(element.path);
-    if (fileType.contains("application")) {
+    if (fileType?.contains("application") ?? false) {
       print("Delete ${element.path}");
       File(element.path).delete();
     }
@@ -410,4 +410,30 @@ void deleteObsoleteApk() async {
 
 Future<PackageInfo> appInfo() async {
   return await PackageInfo.fromPlatform();
+}
+
+enum SearchOption { SauceBot, Trace, SauceNao }
+
+final searchOptionValues = EnumValues({
+  "SauceNAO": SearchOption.SauceNao,
+  "Trace": SearchOption.Trace,
+  "Sauce Bot": SearchOption.SauceBot
+});
+
+class EnumValues<T> {
+  Map<String, T> map;
+  Map<T, String> reverseMap;
+
+  EnumValues(this.map);
+
+  Map<T, String> get reverse {
+    if (reverseMap == null) {
+      reverseMap = map.map((k, v) => new MapEntry(v, k));
+    }
+    return reverseMap;
+  }
+}
+
+String returnTime(Duration time) {
+  return "${(time.inHours > 0) ? (time.inHours.toString().padLeft(2, '0') + ':') : ""}${time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${time.inSeconds.remainder(60).toString().padLeft(2, '0')}";
 }

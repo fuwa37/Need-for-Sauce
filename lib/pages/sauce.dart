@@ -196,39 +196,71 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
             ? (widget.sauce.imageUrl == null) ? Container() : _imageShow()
             : _videoPlayer(),
         Padding(
-            padding: EdgeInsets.all(10),
-            child: MediaQuery(
-                data: MediaQueryData(textScaleFactor: 1),
-                child: Html(
-                  shrinkWrap: true,
-                  data: (widget?.sauce?.sauceStatus ?? true)
-                      ? """
+            padding: EdgeInsets.all(8),
+            child: Stack(
+              children: [
+                MediaQuery(
+                    data: MediaQueryData(textScaleFactor: 1),
+                    child: Html(
+                      shrinkWrap: true,
+                      data: (widget?.sauce?.sauceStatus ?? true)
+                          ? """
                       <code><a href='help'>Got wrong result?</a>
                       </br>Similarity: ${widget.sauce.similarity}%</code>
                       </br>${widget.sauce.reply}
                       """
-                      : widget.sauce.reply,
-                  onLinkTap: (url) {
-                    print(url);
-                    canLaunch(url).then((value) {
-                      if (value) {
-                        launch(url);
-                      } else {
-                        if (url == 'help') {
-                          properImageHelp(context, _helpController);
-                        }
-                      }
-                    });
-                  },
-                  style: {
-                    'p': Style(
-                        fontSize: FontSize(
-                            15 * MediaQuery.of(context).textScaleFactor)),
-                    'code': Style(
-                        fontSize: FontSize(
-                            12 * MediaQuery.of(context).textScaleFactor)),
-                  },
-                ))),
+                          : widget.sauce.reply,
+                      onLinkTap: (url) {
+                        print(url);
+                        canLaunch(url).then((value) {
+                          if (value) {
+                            launch(url);
+                          } else {
+                            if (url == 'help') {
+                              properImageHelp(context, _helpController);
+                            }
+                          }
+                        });
+                      },
+                      style: {
+                        'p': Style(
+                            fontSize: FontSize(
+                                15 * MediaQuery.of(context).textScaleFactor)),
+                        'code': Style(
+                            fontSize: FontSize(
+                                12 * MediaQuery.of(context).textScaleFactor)),
+                      },
+                    )),
+                Positioned(
+                  right: 0,
+                  top: -8,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width / 2,
+                    child: MediaQuery(
+                        data: MediaQueryData(textScaleFactor: 1),
+                        child: Html(
+                          shrinkWrap: true,
+                          data: (widget?.sauce?.source != null)
+                              ? widget.sauce.source
+                              : '',
+                          onLinkTap: (url) {
+                            canLaunch(url).then((value) {
+                              if (value) {
+                                launch(url);
+                              }
+                            });
+                          },
+                          style: {
+                            'p': Style(
+                                fontSize: FontSize(12 *
+                                    MediaQuery.of(context).textScaleFactor),
+                                textAlign: TextAlign.right),
+                          },
+                        )),
+                  ),
+                ),
+              ],
+            )),
       ],
     );
   }
@@ -269,12 +301,10 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: (widget?.sauce?.sauceStatus ?? true)
-            ? Text(
-                widget.sauce.title,
-                softWrap: true,
-              )
-            : null,
+        title: Text(
+          widget?.sauce?.title ?? '',
+          softWrap: true,
+        ),
         actions: [
           IconButton(
             tooltip: "Share",

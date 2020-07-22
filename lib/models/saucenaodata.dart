@@ -561,18 +561,19 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
   int id;
   List<String> tags;
   String thumbPage;
+  List<String> addInfo;
 
-  SauceNaoH18({
-    this.source,
-    this.creator,
-    this.engName,
-    this.jpName,
-    this.page,
-    this.numPages,
-    this.id,
-    this.tags,
-    this.thumbPage,
-  });
+  SauceNaoH18(
+      {this.source,
+      this.creator,
+      this.engName,
+      this.jpName,
+      this.page,
+      this.numPages,
+      this.id,
+      this.tags,
+      this.thumbPage,
+      this.addInfo});
 
   factory SauceNaoH18.fromJson(Map<String, dynamic> json, String indexName) =>
       SauceNaoH18(
@@ -626,20 +627,16 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
       return this;
     }
 
-    String thumbPage =
-        "https://nhentai.net/galleries/${info.mediaId}/${page}t.jpg";
+    String thumbPage = (info?.mediaId != null) ?
+        "https://t.nhentai.net/galleries/${info.mediaId}/${page}t.jpg" : null;
 
-    return SauceNaoH18(
-      source: source,
-      creator: creator,
-      engName: engName,
-      jpName: jpName,
-      page: page,
-      numPages: info?.numPages,
-      id: info?.id,
-      thumbPage: thumbPage,
-      tags: info?.tags == null ? null : NhentaiResult.getTags(info.tags),
-    );
+    this.numPages = info?.numPages;
+    this.thumbPage = thumbPage;
+    this.id = info?.id;
+    this.tags = info?.tags == null ? null : NhentaiResult.getTags(info.tags);
+    this.addInfo = ['nhentai', 'https://nhentai.net/'];
+
+    return this;
   }
 }
 

@@ -33,6 +33,11 @@ class SauceObject {
   }
 
   SauceObject.fromTrace(TraceDocs trace) {
+    source = '<p>Powered by <a href="https://trace.moe/">Trace</a>';
+    if (trace.addInfo) {
+      source += ' & <a href="https://anilist.co/">AniList</a>';
+    }
+    source += '</p>';
     var output = '';
 
     trace.toJsonHtml().forEach((key, value) {
@@ -73,6 +78,11 @@ class SauceObject {
 
   SauceObject.fromSauceNao(
       SauceNaoResultHeader header, SauceNaoResultDataAbstract data) {
+    source = '<p>Powered by <a href="https://saucenao.com/">SauceNAO</a>';
+    if (data is SauceNaoH18 && data.addInfo != null) {
+      source += ' & <a href=${data.addInfo[1]}>${data.addInfo[0]}</a>';
+    }
+    source += '</p>';
     var output = '';
 
     data.toJsonHtml().forEach((key, value) {

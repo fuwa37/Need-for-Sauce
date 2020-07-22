@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:need_for_sauce/common/shared_preferences_helper.dart';
+import 'package:need_for_sauce/common/common.dart';
 
 class ImageNotifier extends ChangeNotifier {
   dynamic image;

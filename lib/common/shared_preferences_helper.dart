@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:need_for_sauce/models/models.dart';
 import 'dart:convert';
+import 'package:need_for_sauce/common/common.dart';
 
 // Based on https://saucenao.com/tools/examples/api/identify_images_v1.1.py
 // Commented index, site closed or index API broken/not updated
@@ -85,14 +86,6 @@ String sauceNaoDBMask(Map<String, String> index) {
 
   return dbmask.toString();
 }
-
-enum SearchOption { SauceBot, Trace, SauceNao }
-
-final searchOptionValues = EnumValues({
-  "SauceNAO": SearchOption.SauceNao,
-  "Trace": SearchOption.Trace,
-  "Sauce Bot": SearchOption.SauceBot
-});
 
 class SharedPreferencesUtils {
   static SharedPreferences _prefs;

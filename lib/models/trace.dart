@@ -88,6 +88,7 @@ class TraceDocs {
   List<String> genres;
   String description;
   String source;
+  bool addInfo = false;
 
   TraceDocs(
       {this.from,
@@ -207,6 +208,7 @@ class TraceDocs {
     this.episodes = infoMedia.episodes;
     this.format = infoMedia.format;
     this.source = infoMedia.source;
+    this.addInfo = true;
 
     return this;
   }
