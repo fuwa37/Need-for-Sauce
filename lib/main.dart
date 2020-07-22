@@ -36,9 +36,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart';
 import 'package:rect_getter/rect_getter.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
-void main() => runApp(ChangeNotifierProvider(
-    create: (context) => LoadingNotifier(), child: MyApp()));
+void main() {
+  FlutterError.onError = Crashlytics.instance.recordFlutterError;
+
+  runApp(ChangeNotifierProvider(
+      create: (context) => LoadingNotifier(), child: MyApp()));
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -77,11 +83,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   var _optionKey = RectGetter.createGlobalKey();
   ValueNotifier<double> _paddingOption = ValueNotifier(0);
   AnimationController _rotateAnimationController;
+  final FirebaseAnalytics analytics = FirebaseAnalytics();
 
   _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
     print(await Permission.storage.request());
-
     ImageNotifier _imageNotifier =
         Provider.of<ImageNotifier>(context, listen: false);
 
@@ -98,8 +104,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }));
 
         if (result == null) _getMedia();
+        analytics.logSelectContent(contentType: "media", itemId: ".gif");
         _imageNotifier.setImage(result);
       } else {
+        analytics.logSelectContent(contentType: "media", itemId: ".image");
         _imageNotifier.setImage(media);
       }
     } else if (fileType[0] == 'video') {
@@ -108,7 +116,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return VideoCapture(media ?? videoIntent);
       }));
       if (result == null && videoIntent == null) _getMedia();
-
+      analytics.logSelectContent(contentType: "media", itemId: ".video");
       _imageNotifier.setImage(result);
     } else {
       return;
@@ -125,6 +133,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (result == null) return;
 
     if (result != null) {
+      analytics.logEvent(name: "edit");
       _imageNotifier.setImage(result);
     }
   }
@@ -155,9 +164,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return GifCapture(url);
         }));
         if (result == null) _getMedia();
+        analytics.logSelectContent(contentType: "url", itemId: ".gif");
         _imageNotifier.setImage(result);
         _loadingNotifier.popDialog();
       } else {
+        analytics.logSelectContent(contentType: "url", itemId: ".image");
         _imageNotifier.setImage(url);
       }
       _loadingNotifier.popDialog();
@@ -167,6 +178,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
         return VideoCapture(url);
       }));
+      analytics.logSelectContent(contentType: "url", itemId: ".video");
       _imageNotifier.setImage(result);
       _loadingNotifier.popDialog();
       return;
@@ -296,6 +308,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }*/
 
   Future<Response> _sauceNaoConn() async {
+    analytics.logSelectContent(
+        contentType: "search_options", itemId: "saucenao");
+
     var mask =
         sauceNaoDBMask(context.read<SearchOptionNotifier>().sauceNaoMask);
     var image = context.read<ImageNotifier>().image;
@@ -327,6 +342,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<Response> _traceConn() async {
+    analytics.logSelectContent(contentType: "search_options", itemId: "trace");
+
     var image = context.read<ImageNotifier>().image;
     var token = CancelToken();
     loadingDialog(scaffoldContext: _scaffoldKey.currentContext, token: token);
@@ -411,6 +428,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   var sauce = sauces.results[0];
                   var data = sauce.toSauceNaoData();
                   if (data is SauceNaoH18 && _searchOptionNotifier.getAddInfo) {
+                    analytics.logSelectContent(
+                        contentType: "search_options", itemId: "addinfo");
+
                     try {
                       sauce.data = await data.withInfo();
                       _loadingNotifier.popDialog();
@@ -543,11 +563,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               if (sauces.docs != null) {
                 var sauce = sauces.docs[0];
                 if (_searchOptionNotifier.getAddInfo) {
-                  sauce = await sauce.withInfo();
-                  _loadingNotifier.popDialog();
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return SauceDesc(SauceObject.fromTrace(sauce));
-                  }));
+                  analytics.logSelectContent(
+                      contentType: "search_options", itemId: "addinfo");
+                  try {
+                    sauce = await sauce.withInfo();
+                    _loadingNotifier.popDialog();
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return SauceDesc(SauceObject.fromTrace(sauce));
+                    }));
+                  } on NoInfoException catch (e) {
+                    print(e);
+                    _loadingNotifier.popDialog();
+                    _errorBannerNotifier.setPop(true);
+                    _errorBannerNotifier.setUpBanner(
+                        message: Text(
+                          "$e",
+                          textAlign: TextAlign.start,
+                        ),
+                        action: FlatButton(
+                          child: Text("CONTINUE"),
+                          onPressed: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) {
+                              return SauceDesc(SauceObject.fromTrace(sauce));
+                            }));
+                            _errorBannerNotifier.setPop(false);
+                          },
+                        ));
+                  }
                 } else {
                   _loadingNotifier.popDialog();
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -609,6 +653,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   _addInfoHelp() {
+    analytics.logEvent(name: "help", parameters: {
+      "dialog": "addinfo"
+    });
     showDialog(
         context: context,
         builder: (context) {
@@ -655,6 +702,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   _searchEngineHelp() {
+    analytics.logEvent(name: "help", parameters: {
+      "dialog": "search_engine"
+    });
     showDialog(
         context: context,
         builder: (context) {
@@ -1046,6 +1096,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.initState();
     deleteObsoleteApk();
 
+    analytics.logAppOpen();
+
     _rotateAnimationController = AnimationController(
         duration: const Duration(milliseconds: 100), vsync: this);
 
@@ -1056,6 +1108,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
         .listen((List<SharedMediaFile> value) {
       if (value?.isNotEmpty ?? false) {
+        analytics.logEvent(name: "intent");
         if (value[0].type == SharedMediaType.IMAGE) {
           _imageNotifier.setImage(File(value[0].path));
         } else if (value[0].type == SharedMediaType.VIDEO) {
@@ -1069,6 +1122,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // For sharing images coming from outside the app while the app is closed
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value?.isNotEmpty ?? false) {
+        analytics.logEvent(name: "intent");
         if (value[0].type == SharedMediaType.IMAGE) {
           _imageNotifier.setImage(File(value[0].path));
         } else if (value[0].type == SharedMediaType.VIDEO) {
@@ -1081,6 +1135,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _intentDataStreamSubscription =
         ReceiveSharingIntent.getTextStream().listen((String value) {
       if (value?.isNotEmpty ?? false) {
+        analytics.logEvent(name: "intent");
         _checkURLContentType(value);
       }
     }, onError: (err) {
@@ -1090,6 +1145,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // For sharing or opening urls/text coming from outside the app while the app is closed
     ReceiveSharingIntent.getInitialText().then((String value) {
       if (value?.isNotEmpty ?? false) {
+        analytics.logEvent(name: "intent");
         _checkURLContentType(value);
       }
     });

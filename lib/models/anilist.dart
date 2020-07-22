@@ -41,9 +41,27 @@ class AnilistObject {
                 ''';
     var id = {'id': anilistId};
 
-    var response = await Sauce
-        .anilist()
-        .post('', data: json.encode({'query': query, 'variables': id}));
+    var response;
+    try {
+      response = await Sauce.anilist()
+          .post('', data: json.encode({'query': query, 'variables': id}));
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to anilist.co");
+          }
+      }
+    }
+    if (response == null) return null;
 
     return AnilistObject.fromJson(response.data);
   }

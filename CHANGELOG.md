@@ -1,3 +1,8 @@
+## 0.40
+
+* Add analytics 
+* Add error and crash report
+
 ## 0.3.6
 
 * Some attributions

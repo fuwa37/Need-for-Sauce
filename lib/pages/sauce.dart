@@ -11,6 +11,7 @@ import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom hide Text;
 import 'package:cached_video_player/cached_video_player.dart';
 import 'package:need_for_sauce/common/video_control.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -27,6 +28,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   CachedVideoPlayerController _videoPlayerController;
   ScrollController _helpController = ScrollController();
   Future<void> _init;
+  final FirebaseAnalytics analytics = FirebaseAnalytics();
 
   void _videoListener() async {
     if (_videoPlayerController.value.position ==
@@ -217,6 +219,12 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                             launch(url);
                           } else {
                             if (url == 'help') {
+                              analytics.logEvent(
+                                  name: "help",
+                                  parameters: {
+                                    "dialog": "result",
+                                    "similarity": "${widget.sauce.similarity}"
+                                  });
                               properImageHelp(context, _helpController);
                             }
                           }
@@ -310,6 +318,10 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
             tooltip: "Share",
             onPressed: () {
               Share.share(removeAllHtmlTags(widget.sauce.reply));
+              analytics.logShare(
+                  contentType: "${widget?.sauce?.title}",
+                  itemId: "${widget?.sauce?.reply?.substring(0, 48)}",
+                  method: "Share");
             },
             icon: Icon(Icons.share),
           )
