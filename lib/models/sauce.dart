@@ -9,6 +9,7 @@ class SauceObject {
   String source;
   String title;
   bool sauceStatus;
+  List<String> mangadexChapter;
 
   SauceObject({
     this.reply,
@@ -83,6 +84,11 @@ class SauceObject {
       source += ' & <a href=${data.addInfo[1]}>${data.addInfo[0]}</a>';
     }
     source += '</p>';
+
+    if (data is SauceNaoMangadex37 && data.addInfo != null) {
+      mangadexChapter = data.chapterPages;
+    }
+
     var output = '';
 
     data.toJsonHtml().forEach((key, value) {

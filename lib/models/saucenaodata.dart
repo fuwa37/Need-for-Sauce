@@ -265,6 +265,16 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
   String part;
   String year;
   String estTime;
+  bool isAdult;
+  String season;
+  int seasonYear;
+  int episodes;
+  String format;
+  String status;
+  List<String> genres;
+  String description;
+  String sourceMaterial;
+  List<String> addInfo;
 
   SauceNaoAnime2122({
     this.extUrls,
@@ -307,12 +317,65 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
         "est_time": estTime,
       };
 
-  Map<String, dynamic> toJsonHtml() => {
-        "": "<h3>$source</h3>",
-        "<b>Episode</b>": part,
-        "<b>Time</b>": estTime,
-        "<b>AniDB Link</b>": "<a href=${extUrls[0]}>$anidbAid</a>"
-      };
+  Map<String, dynamic> toJsonHtml() {
+    String info = '';
+
+    List<String> out = [
+      season,
+      seasonYear?.toString(),
+      format,
+      episodes?.toString(),
+      status
+    ];
+
+    out.forEach((element) {
+      if (element != null) {
+        if (out.last != element) {
+          info += "$element | ";
+        } else {
+          info += element;
+        }
+      }
+    });
+
+    return {
+      "": "<h3>$source</h3>",
+      "<b>Episode</b>": part,
+      "<b>Time</b>": estTime,
+      "<b>AniDB Link</b>": "<a href=${extUrls[0]}>$anidbAid</a>",
+      "<b>Info</b>": (info?.isNotEmpty ?? false) ? info : null,
+      "<b>Genres</b>": genres?.join(', '),
+      "<b>Source</b>": source,
+      "<b>Description</b>": description
+    };
+  }
+
+  Future<SauceNaoAnime2122> withInfo() async {
+    AnimeRelation relation =
+        await AnimeRelation.getRelation(aniDbId: this.anidbAid);
+
+    if (relation == null) return this;
+
+    AnilistObject info = await AnilistObject.getInfo(relation.anilistId);
+
+    if (info == null) {
+      return this;
+    }
+
+    var infoMedia = info.data.media;
+
+    this.season = infoMedia.season;
+    this.seasonYear = infoMedia.seasonYear;
+    this.status = infoMedia.status;
+    this.description = infoMedia.description;
+    this.genres = infoMedia.genres;
+    this.episodes = infoMedia.episodes;
+    this.format = infoMedia.format;
+    this.sourceMaterial = infoMedia.source;
+    this.addInfo = ['AniList', 'https://anilist.co/'];
+
+    return this;
+  }
 }
 
 class SauceNaoNicoSeiga8 extends SauceNaoResultDataAbstract {
@@ -490,6 +553,13 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
   String part;
   String artist;
   String author;
+  List<String> chapterPages;
+  List<MangaDexLink> altLink;
+  String description;
+  String status;
+  List<String> genres;
+  String rating;
+  List<String> addInfo;
 
   SauceNaoMangadex37({
     this.extUrls,
@@ -541,14 +611,49 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
         "author": author,
       };
 
-  Map<String, dynamic> toJsonHtml() => {
-        "": "<h3>$source$part</h3>",
-        "<b>Artist</b>": artist,
-        "<b>Author</b>": author,
-        "<b>Link</b>": extUrls[0] == null
-            ? null
-            : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
-      };
+  Map<String, dynamic> toJsonHtml() {
+    var links = List<String>();
+    if (altLink != null) {
+      altLink.forEach((e) {
+        links.add("<a href=${e.url}>${e.name}</a>");
+      });
+    }
+
+    return {
+      "": "<h3>$source$part</h3>",
+      "<b>Artist</b>": artist,
+      "<b>Author</b>": author,
+      "<b>Status</b>": status,
+      "<b>Tags</b>": genres?.join(', '),
+      "<b>Rating</b>": rating,
+      "<b>Links</b>": extUrls[0] == null
+          ? null
+          : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a> ${(links.isNotEmpty) ? ' | ${links.join(" | ")}' : null}",
+      "<b>Description</b>": description,
+    };
+  }
+
+  Future<SauceNaoMangadex37> withInfo() async {
+    MangaDexChapter chapter =
+        await MangaDexChapter.getInfo(this.malId.toString());
+
+    if (chapter == null) return this;
+
+    MangaDexObject info =
+        await MangaDexObject.getInfo(chapter.mangaId.toString());
+
+    if (info == null) return this;
+
+    this.chapterPages = chapter.pageArray;
+    this.altLink = info.links;
+    this.description = info.description;
+    this.status = info.status;
+    this.genres = info.genres;
+    this.rating = info.rating.bayesian;
+    this.addInfo = ['MangaDex', 'https://mangadex.org/'];
+
+    return this;
+  }
 }
 
 class SauceNaoH18 extends SauceNaoResultDataAbstract {
@@ -627,8 +732,9 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
       return this;
     }
 
-    String thumbPage = (info?.mediaId != null) ?
-        "https://t.nhentai.net/galleries/${info.mediaId}/${page}t.jpg" : null;
+    String thumbPage = (info?.mediaId != null)
+        ? "https://t.nhentai.net/galleries/${info.mediaId}/${page}t.jpg"
+        : null;
 
     this.numPages = info?.numPages;
     this.thumbPage = thumbPage;
@@ -828,10 +934,10 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
         konachanId: json["konachan_id"],
         yandereId: json["yandere_id"],
         e621Id: json["e621_id"],
+        // no documentation
         apId: json["ap_id"] ??
             json["anime-pictures_id"] ??
             json["anime_pictures_id"],
-        // no documentation
         idolId: json["idol_id"],
         danbooruId: json["danbooru_id"],
         gelbooruId: json["gelbooru_id"],

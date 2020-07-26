@@ -184,6 +184,8 @@ class TraceDocs {
       "<b>Episode</b>": episode,
       "<b>Time</b>":
           "${returnTime(Duration(milliseconds: (at * 1000).toInt()))}",
+      "<b>Links</b>":
+          "<a href='https://anilist.co/anime/$anilistId'>AniList</a>${(malId == null) ? null : " | <a href='https://myanimelist.net/anime/$malId'>MyAnimeList</a>"}",
       "<b>Info</b>": (info?.isNotEmpty ?? false) ? info : null,
       "<b>Genres</b>": genres?.join(', '),
       "<b>Source</b>": source,

@@ -62,4 +62,24 @@ class Sauce {
 
     return Dio(options);
   }
+
+  static Dio animeRelation() {
+    BaseOptions options = new BaseOptions(
+      baseUrl: 'https://relations.yuna.moe/api/ids',
+      receiveDataWhenStatusError: true,
+      connectTimeout: 15 * 1000,
+    );
+
+    return Dio(options);
+  }
+
+  static Dio mangaDex() {
+    BaseOptions options = new BaseOptions(
+      baseUrl: 'https://mangadex.org/api/',
+      receiveDataWhenStatusError: true,
+      connectTimeout: 15 * 1000,
+    );
+
+    return Dio(options);
+  }
 }
