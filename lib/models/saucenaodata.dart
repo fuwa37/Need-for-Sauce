@@ -67,21 +67,15 @@ class SauceNaoPixiv56 extends SauceNaoResultDataAbstract {
           memberId: sn.memberId,
           memberUrl: "https://www.pixiv.net/member.php?id=${sn.memberId}");
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "pixiv_id": pixivId,
-        "member_name": memberName,
-        "member_id": memberId,
-        "member_url": memberUrl
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>Pixiv ID<b>": "<a href=${extUrls[0]}>$pixivId</a>",
         "<b>Member Name<b>": "<a href=$memberUrl>$memberName</a>",
       };
+
+  Future<SauceNaoPixiv56> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoDeviantArt34 extends SauceNaoResultDataAbstract {
@@ -119,20 +113,15 @@ class SauceNaoDeviantArt34 extends SauceNaoResultDataAbstract {
           authorName: sn.authorName,
           authorUrl: sn.authorUrl);
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "da_id": daId,
-        "author_name": authorName,
-        "author_url": authorUrl,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>DeviantArt ID</b>": "<a href=${extUrls[0]}>$daId</a>",
         "<b>Author</b>": "<a href=$authorUrl>$authorName</a>",
       };
+
+  Future<SauceNaoDeviantArt34> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoBcy3132 extends SauceNaoResultDataAbstract {
@@ -182,23 +171,15 @@ class SauceNaoBcy3132 extends SauceNaoResultDataAbstract {
         bcyType: sn.bcyType,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "bcy_id": bcyId,
-        "member_name": memberName,
-        "member_id": memberId,
-        "member_link_id": memberLinkId,
-        "bcy_type": bcyType,
-        "member_url": memberUrl
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>bcy ID</b>": bcyId,
         "<b>Author</b>": "<a href=$memberUrl>$memberName</a>",
       };
+
+  Future<SauceNaoBcy3132> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoPawoo35 extends SauceNaoResultDataAbstract {
@@ -241,21 +222,15 @@ class SauceNaoPawoo35 extends SauceNaoResultDataAbstract {
         pawooUserDisplayName: sn.pawooUserDisplayName,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "created_at": createdAt.toIso8601String(),
-        "pawoo_id": pawooId,
-        "pawoo_user_acct": pawooUserAcct,
-        "pawoo_user_username": pawooUserUsername,
-        "pawoo_user_display_name": pawooUserDisplayName,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "<b>Pawoo ID</b>": "<a href=${extUrls[0]}/$pawooId>$pawooId</a>",
         "<b>Author</b>":
             "$pawooUserDisplayName(<a href=${extUrls[0]}>@$pawooUserAcct</a>)",
       };
+
+  Future<SauceNaoPawoo35> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
@@ -271,6 +246,8 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
   int episodes;
   String format;
   String status;
+  int anilistId;
+  int malId;
   List<String> genres;
   String description;
   String sourceMaterial;
@@ -300,22 +277,13 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
   factory SauceNaoAnime2122.fromSauceNaoResultDataAbstract(
           SauceNaoResultDataAbstract sn) =>
       SauceNaoAnime2122(
+        extUrls: sn.extUrls,
         source: sn.source,
         anidbAid: sn.anidbAid,
         part: sn.part,
         year: sn.year,
         estTime: sn.estTime,
       );
-
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "source": source,
-        "anidb_aid": anidbAid,
-        "part": part,
-        "year": year,
-        "est_time": estTime,
-      };
 
   Map<String, dynamic> toJsonHtml() {
     String info = '';
@@ -342,7 +310,15 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
       "": "<h3>$source</h3>",
       "<b>Episode</b>": part,
       "<b>Time</b>": estTime,
-      "<b>AniDB Link</b>": "<a href=${extUrls[0]}>$anidbAid</a>",
+      "<b>Links</b>": (extUrls == null)
+          ? null
+          : "<a href=${extUrls[0]}>AniDb</a>" +
+              ((anilistId == null)
+                  ? ''
+                  : " | <a href='https://anilist.co/anime/$anilistId'>AniList</a>") +
+              ((malId == null)
+                  ? ''
+                  : " | <a href='https://myanimelist.net/anime/$malId'>MyAnimeList</a>"),
       "<b>Info</b>": (info?.isNotEmpty ?? false) ? info : null,
       "<b>Genres</b>": genres?.join(', '),
       "<b>Source</b>": source,
@@ -355,6 +331,8 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
         await AnimeRelation.getRelation(aniDbId: this.anidbAid);
 
     if (relation == null) return this;
+    this.anilistId = relation.anilistId;
+    this.malId = relation.malId;
 
     AnilistObject info = await AnilistObject.getInfo(relation.anilistId);
 
@@ -417,20 +395,15 @@ class SauceNaoNicoSeiga8 extends SauceNaoResultDataAbstract {
         memberUrl: "https://seiga.nicovideo.jp/user/illust/${sn.memberId}",
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "seiga_id": seigaId,
-        "member_name": memberName,
-        "member_id": memberId,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>Seiga ID</b>": "<a href=${extUrls[0]}>$seigaId</a>",
         "<b>Member</b>": "<a href=$memberUrl>$memberName</a>",
       };
+
+  Future<SauceNaoNicoSeiga8> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoMadokami36 extends SauceNaoResultDataAbstract {
@@ -469,19 +442,14 @@ class SauceNaoMadokami36 extends SauceNaoResultDataAbstract {
         type: sn.type,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "mu_id": muId,
-        "source": source,
-        "part": part,
-        "type": type,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$part</h3>",
         "<b>MU Link</b>": "<a href=${extUrls[0]}>$muId</a>",
       };
+
+  Future<SauceNaoMadokami36> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
@@ -524,16 +492,6 @@ class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
         estTime: sn.estTime,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "source": source,
-        "imdb_id": imdbId,
-        "part": part,
-        "year": year,
-        "est_time": estTime,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$source</h3>",
         "<b>Episode</b>": part,
@@ -542,6 +500,10 @@ class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
             ? null
             : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
+
+  Future<SauceNaoMoviesShows2324> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
@@ -599,18 +561,6 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
         author: sn.author,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "md_id": mdId,
-        "mu_id": muId,
-        "mal_id": malId,
-        "source": source,
-        "part": part,
-        "artist": artist,
-        "author": author,
-      };
-
   Map<String, dynamic> toJsonHtml() {
     var links = List<String>();
     if (altLink != null) {
@@ -628,14 +578,17 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
       "<b>Rating</b>": rating,
       "<b>Links</b>": extUrls[0] == null
           ? null
-          : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a> ${(links.isNotEmpty) ? ' | ${links.join(" | ")}' : null}",
-      "<b>Description</b>": description,
+          : "</br><a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>" +
+              ((links.isEmpty) ? '' : " | ${links.join(" | ")}"),
+      "<b>Description</b>": (description == null)
+          ? null
+          : "<pre>${bbCodetoHtml(description)}</pre>"
     };
   }
 
   Future<SauceNaoMangadex37> withInfo() async {
     MangaDexChapter chapter =
-        await MangaDexChapter.getInfo(this.malId.toString());
+        await MangaDexChapter.getInfo(this.mdId.toString());
 
     if (chapter == null) return this;
 
@@ -702,19 +655,6 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
         page: int.tryParse(
             snh.indexName?.split('-')?.last?.trim()?.split('.')?.first),
       );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "source": source,
-        "creator":
-            creator == null ? null : List<dynamic>.from(creator?.map((x) => x)),
-        "eng_name": engName,
-        "jp_name": jpName,
-        "page": page,
-        "num_pages": numPages,
-        "tags": tags == null ? null : List<dynamic>.from(tags?.map((x) => x)),
-        "thumbPage": thumbPage,
-      };
 
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$source</br>$engName</br>$jpName</h3>",
@@ -820,21 +760,15 @@ class SauceNaoNijie11 extends SauceNaoResultDataAbstract {
         memberUrl: "https://nijie.info/members.php?id=${sn.memberId}",
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "nijie_id": nijieId,
-        "member_name": memberName,
-        "member_id": memberId,
-        "member_url": memberUrl,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>Nijie ID</b>": "<a href=${extUrls[0]}>$nijieId</a>",
         "<b>Member</b>": "<a href=$memberUrl>$memberName</a>",
       };
+
+  Future<SauceNaoNijie11> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
@@ -875,33 +809,26 @@ class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
         memberLink: "https://medibang.com/author/${sn.memberId}",
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "url": url,
-        "member_name": memberName,
-        "member_id": memberId,
-        "member_link": memberLink,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>Member</b>": "<a href=$memberLink>$memberName</a>",
         "<b>Link</b>":
             url == null ? null : "<a href=$url>${getHostName(url)}</a>"
       };
+
+  Future<SauceNaoMedibang20> withInfo() async {
+    return this;
+  }
 }
 
-class SauceNaoDanYanGelKonSanApe621Idol912262527282930
+class SauceNaoDanYanGelKonSane621Idol9122625272930
     extends SauceNaoResultDataAbstract {
-  SauceNaoDanYanGelKonSanApe621Idol912262527282930({
+  SauceNaoDanYanGelKonSane621Idol9122625272930({
     this.extUrls,
     this.konachanId,
     this.yandereId,
     this.danbooruId,
     this.idolId,
-    this.apId,
     this.sankakuId,
     this.e621Id,
     this.gelbooruId,
@@ -914,7 +841,6 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
   List<String> extUrls;
   int konachanId;
   int idolId;
-  int apId;
   int danbooruId;
   int sankakuId;
   int e621Id;
@@ -924,20 +850,18 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
   String material;
   String characters;
   String source;
+  String tags;
+  List<String> addInfo;
 
-  factory SauceNaoDanYanGelKonSanApe621Idol912262527282930.fromJson(
+  factory SauceNaoDanYanGelKonSane621Idol9122625272930.fromJson(
           Map<String, dynamic> json) =>
-      SauceNaoDanYanGelKonSanApe621Idol912262527282930(
+      SauceNaoDanYanGelKonSane621Idol9122625272930(
         extUrls: json["ext_urls"] == null
             ? null
             : List<String>.from(json["ext_urls"].map((x) => x)),
         konachanId: json["konachan_id"],
         yandereId: json["yandere_id"],
         e621Id: json["e621_id"],
-        // no documentation
-        apId: json["ap_id"] ??
-            json["anime-pictures_id"] ??
-            json["anime_pictures_id"],
         idolId: json["idol_id"],
         danbooruId: json["danbooru_id"],
         gelbooruId: json["gelbooru_id"],
@@ -948,14 +872,13 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
         source: json["source"],
       );
 
-  factory SauceNaoDanYanGelKonSanApe621Idol912262527282930.fromSauceNaoResultDataAbstract(
+  factory SauceNaoDanYanGelKonSane621Idol9122625272930.fromSauceNaoResultDataAbstract(
           SauceNaoResultDataAbstract sn) =>
-      SauceNaoDanYanGelKonSanApe621Idol912262527282930(
+      SauceNaoDanYanGelKonSane621Idol9122625272930(
         extUrls: sn.extUrls,
         konachanId: sn.konachanId,
         yandereId: sn.yandereId,
         e621Id: sn.e621Id,
-        apId: sn.apId,
         idolId: sn.idolId,
         danbooruId: sn.danbooruId,
         gelbooruId: sn.gelbooruId,
@@ -966,26 +889,6 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
         source: sn.source,
       );
 
-  Map<String, dynamic> toJson() {
-    var map = {
-      "ext_urls":
-          extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-      "konachan_id": konachanId,
-      "yandere_id": yandereId,
-      "danbooru_id": danbooruId,
-      "idol_id": idolId,
-      "ap_id": apId,
-      "gelbooru_id": gelbooruId,
-      "e621_id": e621Id,
-      "sankaku_id": sankakuId,
-      "creator": creator,
-      "material": material,
-      "characters": characters,
-      "source": source,
-    };
-    return map;
-  }
-
   Map<String, dynamic> toJsonHtml() => {
         "<b>Yande.re ID</b>":
             yandereId == null ? null : "<a href=${extUrls[0]}>$yandereId</a>",
@@ -994,11 +897,9 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
         "<b>Sankaku ID</b>":
             sankakuId == null ? null : "<a href=${extUrls[0]}>$sankakuId</a>",
         "<b>Gelbooru ID</b>":
-            sankakuId == null ? null : "<a href=${extUrls[0]}>$gelbooruId</a>",
+            gelbooruId == null ? null : "<a href=${extUrls[0]}>$gelbooruId</a>",
         "<b>Konachan ID</b>":
             konachanId == null ? null : "<a href=${extUrls[0]}>$konachanId</a>",
-        "<b>Anime-Pictures ID</b>":
-            apId == null ? null : "<a href=${extUrls[0]}>$apId</a>",
         "<b>e621 ID</b>":
             e621Id == null ? null : "<a href=${extUrls[0]}>$e621Id</a>",
         "<b>Idol Complex ID</b>":
@@ -1007,12 +908,54 @@ class SauceNaoDanYanGelKonSanApe621Idol912262527282930
         "<b>Material(s)</b>": material,
         "<b>Character(s)</b>":
             (characters?.isEmpty ?? true) ? null : characters,
+        "<b>Tags(s)</b>":
+            (tags?.isEmpty ?? true) ? null : tags,
         "<b>Alt. Source</b>": source == null
             ? null
             : Uri.parse(source).isAbsolute
                 ? "<a href=${getSourceUrl(source)}>${getHostName(source)}</a>"
                 : null,
       };
+
+  Future<SauceNaoDanYanGelKonSane621Idol9122625272930> withInfo() async {
+    if (idolId != null || sankakuId != null) return this;
+
+    var info;
+
+    if (danbooruId != null) {
+      info = await DanbooruObject.getInfo(danbooruId);
+      if (info == null) return this;
+
+      this.tags = (info as DanbooruObject).tagString;
+      this.addInfo = ['Danbooru', ' https://danbooru.donmai.us/'];
+    } else if (gelbooruId != null) {
+      info = await GelbooruObject.getInfo(gelbooruId);
+      if (info == null) return this;
+
+      this.tags = (info as GelbooruObject).tags;
+      this.addInfo = ['Gelbooru', 'https://gelbooru.com/'];
+    } else if (yandereId != null) {
+      info = await YandereObject.getInfo(yandereId);
+      if (info == null) return this;
+
+      this.tags = (info as YandereObject).tags;
+      this.addInfo = ['Yande.re', 'https://yande.re/'];
+    } else if (konachanId != null) {
+      info = await KonachanObject.getInfo(konachanId);
+      if (info == null) return this;
+
+      this.tags = (info as KonachanObject).tags;
+      this.addInfo = ['Konachan', 'https://konachan.net/'];
+    } else if (e621Id != null) {
+      info = await E621Object.getInfo(e621Id);
+      if (info == null) return this;
+
+      this.tags = (info as E621Object).tags?.join(' ');
+      this.addInfo = ['MangaDex', 'https://e621.net/'];
+    }
+
+    return this;
+  }
 }
 
 class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
@@ -1043,13 +986,6 @@ class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
         creator: sn.creator,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "source": source,
-        "creator": creator,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$source</h3>",
         "<b>Creator(s)</b>": creator,
@@ -1057,6 +993,10 @@ class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
             ? null
             : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
+
+  Future<SauceNao2DMarket19> withInfo() async {
+    return this;
+  }
 }
 
 // Website closed

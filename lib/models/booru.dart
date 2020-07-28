@@ -167,6 +167,37 @@ class DanbooruObject {
         largeFileUrl: json["large_file_url"],
         previewFileUrl: json["preview_file_url"],
       );
+
+  static Future<DanbooruObject> getInfo(int danbooruId) async {
+    var response;
+    try {
+      response = await Sauce.booru('danbooru', danbooruId.toString()).get('');
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+          {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No post with id $danbooruId found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to internet");
+          }
+      }
+    }
+    if (response == null) return null;
+
+    return DanbooruObject.fromJson(response.data);
+  }
 }
 
 class GelbooruObject {
@@ -230,10 +261,41 @@ class GelbooruObject {
         fileUrl: json["file_url"],
         createdAt: json["created_at"],
       );
+
+  static Future<GelbooruObject> getInfo(int gelbooruId) async {
+    var response;
+    try {
+      response = await Sauce.booru('gelbooru', gelbooruId.toString()).get('');
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+          {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No post with id $gelbooruId found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to internet");
+          }
+      }
+    }
+    if (response?.data[0] == null) return null;
+
+    return GelbooruObject.fromJson(response.data[0]);
+  }
 }
 
-class YanKonObject {
-  YanKonObject({
+class YandereObject {
+  YandereObject({
     this.id,
     this.tags,
     this.createdAt,
@@ -325,7 +387,7 @@ class YanKonObject {
   int lastNotedAt;
   int lastCommentedAt;
 
-  factory YanKonObject.fromJson(Map<String, dynamic> json) => YanKonObject(
+  factory YandereObject.fromJson(Map<String, dynamic> json) => YandereObject(
         id: json["id"],
         tags: json["tags"],
         createdAt: json["created_at"],
@@ -375,6 +437,189 @@ class YanKonObject {
         lastNotedAt: json["last_noted_at"],
         lastCommentedAt: json["last_commented_at"],
       );
+
+  static Future<YandereObject> getInfo(int yandereId) async {
+    var response;
+    try {
+      response = await Sauce.booru('yandere', yandereId.toString()).get('');
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+          {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No post with id $yandereId found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to internet");
+          }
+      }
+    }
+    if (response?.data[0] == null) return null;
+
+    return YandereObject.fromJson(response.data[0]);
+  }
+}
+
+class KonachanObject {
+  KonachanObject({
+    this.id,
+    this.tags,
+    this.createdAt,
+    this.creatorId,
+    this.author,
+    this.change,
+    this.source,
+    this.score,
+    this.md5,
+    this.fileSize,
+    this.fileUrl,
+    this.isShownInIndex,
+    this.previewUrl,
+    this.previewWidth,
+    this.previewHeight,
+    this.actualPreviewWidth,
+    this.actualPreviewHeight,
+    this.sampleUrl,
+    this.sampleWidth,
+    this.sampleHeight,
+    this.sampleFileSize,
+    this.jpegUrl,
+    this.jpegWidth,
+    this.jpegHeight,
+    this.jpegFileSize,
+    this.rating,
+    this.hasChildren,
+    this.parentId,
+    this.status,
+    this.width,
+    this.height,
+    this.isHeld,
+    this.framesPendingString,
+    this.framesPending,
+    this.framesString,
+    this.frames,
+  });
+
+  int id;
+  String tags;
+  int createdAt;
+  int creatorId;
+  String author;
+  int change;
+  String source;
+  int score;
+  String md5;
+  int fileSize;
+  String fileUrl;
+  bool isShownInIndex;
+  String previewUrl;
+  int previewWidth;
+  int previewHeight;
+  int actualPreviewWidth;
+  int actualPreviewHeight;
+  String sampleUrl;
+  int sampleWidth;
+  int sampleHeight;
+  int sampleFileSize;
+  String jpegUrl;
+  int jpegWidth;
+  int jpegHeight;
+  int jpegFileSize;
+  String rating;
+  bool hasChildren;
+  dynamic parentId;
+  String status;
+  int width;
+  int height;
+  bool isHeld;
+  String framesPendingString;
+  List<dynamic> framesPending;
+  String framesString;
+  List<dynamic> frames;
+
+  factory KonachanObject.fromJson(Map<String, dynamic> json) => KonachanObject(
+        id: json["id"],
+        tags: json["tags"],
+        createdAt: json["created_at"],
+        creatorId: json["creator_id"],
+        author: json["author"],
+        change: json["change"],
+        source: json["source"],
+        score: json["score"],
+        md5: json["md5"],
+        fileSize: json["file_size"],
+        fileUrl: json["file_url"],
+        isShownInIndex: json["is_shown_in_index"],
+        previewUrl: json["preview_url"],
+        previewWidth: json["preview_width"],
+        previewHeight: json["preview_height"],
+        actualPreviewWidth: json["actual_preview_width"],
+        actualPreviewHeight: json["actual_preview_height"],
+        sampleUrl: json["sample_url"],
+        sampleWidth: json["sample_width"],
+        sampleHeight: json["sample_height"],
+        sampleFileSize: json["sample_file_size"],
+        jpegUrl: json["jpeg_url"],
+        jpegWidth: json["jpeg_width"],
+        jpegHeight: json["jpeg_height"],
+        jpegFileSize: json["jpeg_file_size"],
+        rating: json["rating"],
+        hasChildren: json["has_children"],
+        parentId: json["parent_id"],
+        status: json["status"],
+        width: json["width"],
+        height: json["height"],
+        isHeld: json["is_held"],
+        framesPendingString: json["frames_pending_string"],
+        framesPending: (json["frames_pending"] == null)
+            ? null
+            : List<dynamic>.from(json["frames_pending"].map((x) => x)),
+        framesString: json["frames_string"],
+        frames: (json["frames"] == null)
+            ? null
+            : List<dynamic>.from(json["frames"].map((x) => x)),
+      );
+
+  static Future<KonachanObject> getInfo(int konachanId) async {
+    var response;
+    try {
+      response = await Sauce.booru('konachan', konachanId.toString()).get('');
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+          {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No post with id $konachanId found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to internet");
+          }
+      }
+    }
+    if (response?.data[0] == null) return null;
+
+    return KonachanObject.fromJson(response.data[0]);
+  }
 }
 
 class E621Object {
@@ -406,11 +651,11 @@ class E621Object {
   int id;
   DateTime createdAt;
   DateTime updatedAt;
-  E621FileClass file;
-  E621Preview preview;
-  E621Preview sample;
+  E621File file;
+  E621File preview;
+  E621File sample;
   E621Score score;
-  E621Tags tags;
+  List<String> tags;
   List<String> lockedTags;
   int changeSeq;
   E621Flags flags;
@@ -426,34 +671,87 @@ class E621Object {
   bool isFavorited;
   bool hasNotes;
 
-  factory E621Object.fromJson(Map<String, dynamic> json) => E621Object(
-        id: json["id"],
-        createdAt: DateTime.parse(json["created_at"]),
-        updatedAt: DateTime.parse(json["updated_at"]),
-        file: E621FileClass.fromJson(json["file"]),
-        preview: E621Preview.fromJson(json["preview"]),
-        sample: E621Preview.fromJson(json["sample"]),
-        score: E621Score.fromJson(json["score"]),
-        tags: E621Tags.fromJson(json["tags"]),
-        lockedTags: List<String>.from(json["locked_tags"].map((x) => x)),
-        changeSeq: json["change_seq"],
-        flags: E621Flags.fromJson(json["flags"]),
-        rating: json["rating"],
-        favCount: json["fav_count"],
-        sources: List<String>.from(json["sources"].map((x) => x)),
-        pools: List<int>.from(json["pools"].map((x) => x)),
-        relationships: E621Relationships.fromJson(json["relationships"]),
-        approverId: json["approver_id"],
-        uploaderId: json["uploader_id"],
-        description: json["description"],
-        commentCount: json["comment_count"],
-        isFavorited: json["is_favorited"],
-        hasNotes: json["has_notes"],
-      );
+  factory E621Object.fromJson(Map<String, dynamic> json) {
+    List<String> tags;
+
+    if (json["tags"] != null) {
+      tags = E621Tags.fromJson(json["tags"]).combineTags();
+    }
+
+    return E621Object(
+      id: json["id"],
+      createdAt: (json["created_at"] == null)
+          ? null
+          : DateTime.parse(json["created_at"]),
+      updatedAt: (json["updated_at"] == null)
+          ? null
+          : DateTime.parse(json["updated_at"]),
+      file: (json["file"] == null) ? null : E621File.fromJson(json["file"]),
+      preview:
+          (json["preview"] == null) ? null : E621File.fromJson(json["preview"]),
+      sample:
+          (json["sample"] == null) ? null : E621File.fromJson(json["sample"]),
+      score: (json["score"] == null) ? null : E621Score.fromJson(json["score"]),
+      tags: tags,
+      lockedTags: (json["locked_tags"] == null)
+          ? null
+          : List<String>.from(json["locked_tags"].map((x) => x)),
+      changeSeq: json["change_seq"],
+      flags: (json["flags"] == null) ? null : E621Flags.fromJson(json["flags"]),
+      rating: json["rating"],
+      favCount: json["fav_count"],
+      sources: (json["sources"] == null)
+          ? null
+          : List<String>.from(json["sources"].map((x) => x)),
+      pools: (json["pools"] == null)
+          ? null
+          : List<int>.from(json["pools"].map((x) => x)),
+      relationships: (json["relationships"] == null)
+          ? null
+          : E621Relationships.fromJson(json["relationships"]),
+      approverId: json["approver_id"],
+      uploaderId: json["uploader_id"],
+      description: json["description"],
+      commentCount: json["comment_count"],
+      isFavorited: json["is_favorited"],
+      hasNotes: json["has_notes"],
+    );
+  }
+
+  static Future<E621Object> getInfo(int e621Id) async {
+    var response;
+    try {
+      response = await Sauce.booru('e621', e621Id.toString()).get('');
+    } on DioError catch (e) {
+      switch (e.type) {
+        case DioErrorType.RECEIVE_TIMEOUT:
+        case DioErrorType.SEND_TIMEOUT:
+        case DioErrorType.CONNECT_TIMEOUT:
+          {
+            throw NoInfoException("Connection timeout");
+          }
+        case DioErrorType.RESPONSE:
+          {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No post with id $e621Id found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
+        case DioErrorType.CANCEL:
+        case DioErrorType.DEFAULT:
+          {
+            throw NoInfoException("Couldn't connect to internet");
+          }
+      }
+    }
+    if (response?.data['post'] == null) return null;
+
+    return E621Object.fromJson(response.data['post']);
+  }
 }
 
-class E621FileClass {
-  E621FileClass({
+class E621File {
+  E621File({
     this.width,
     this.height,
     this.ext,
@@ -469,7 +767,7 @@ class E621FileClass {
   String md5;
   String url;
 
-  factory E621FileClass.fromJson(Map<String, dynamic> json) => E621FileClass(
+  factory E621File.fromJson(Map<String, dynamic> json) => E621File(
         width: json["width"],
         height: json["height"],
         ext: json["ext"],
@@ -506,27 +804,6 @@ class E621Flags {
       );
 }
 
-class E621Preview {
-  E621Preview({
-    this.width,
-    this.height,
-    this.url,
-    this.has,
-  });
-
-  int width;
-  int height;
-  String url;
-  bool has;
-
-  factory E621Preview.fromJson(Map<String, dynamic> json) => E621Preview(
-        width: json["width"],
-        height: json["height"],
-        url: json["url"],
-        has: json["has"] == null ? null : json["has"],
-      );
-}
-
 class E621Relationships {
   E621Relationships({
     this.parentId,
@@ -545,7 +822,9 @@ class E621Relationships {
         parentId: json["parent_id"],
         hasChildren: json["has_children"],
         hasActiveChildren: json["has_active_children"],
-        children: List<int>.from(json["children"].map((x) => x)),
+        children: (json["children"] == null)
+            ? null
+            : List<int>.from(json["children"].map((x) => x)),
       );
 }
 
@@ -589,13 +868,40 @@ class E621Tags {
   List<String> meta;
 
   factory E621Tags.fromJson(Map<String, dynamic> json) => E621Tags(
-        general: List<String>.from(json["general"].map((x) => x)),
-        species: List<String>.from(json["species"].map((x) => x)),
-        character: List<String>.from(json["character"].map((x) => x)),
-        copyright: List<String>.from(json["copyright"].map((x) => x)),
-        artist: List<String>.from(json["artist"].map((x) => x)),
-        invalid: List<String>.from(json["invalid"].map((x) => x)),
-        lore: List<String>.from(json["lore"].map((x) => x)),
-        meta: List<String>.from(json["meta"].map((x) => x)),
+        general: (json["general"] == null)
+            ? []
+            : List<String>.from(json["general"].map((x) => x)),
+        species: (json["species"] == null)
+            ? []
+            : List<String>.from(json["species"].map((x) => x)),
+        character: (json["character"] == null)
+            ? []
+            : List<String>.from(json["character"].map((x) => x)),
+        copyright: (json["copyright"] == null)
+            ? []
+            : List<String>.from(json["copyright"].map((x) => x)),
+        artist: (json["artist"] == null)
+            ? []
+            : List<String>.from(json["artist"].map((x) => x)),
+        invalid: (json["invalid"] == null)
+            ? []
+            : List<String>.from(json["invalid"].map((x) => x)),
+        lore: (json["lore"] == null)
+            ? []
+            : List<String>.from(json["lore"].map((x) => x)),
+        meta: (json["meta"] == null)
+            ? []
+            : List<String>.from(json["meta"].map((x) => x)),
       );
+
+  List<String> combineTags() {
+    return this.general +
+        this.species +
+        this.character +
+        this.copyright +
+        this.artist +
+        this.invalid +
+        this.lore +
+        this.meta;
+  }
 }

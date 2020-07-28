@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 import 'package:markdown/markdown.dart' show markdownToHtml;
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
+import 'package:provider/provider.dart';
 
 class UpdateDialog extends StatefulWidget {
   final String oldV;
@@ -476,7 +477,7 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   initPlatformState() async {
-    PackageInfo packageInfo = await appInfo();
+    AppInfo packageInfo = context.read<AppInfo>();
     androidInfo = await deviceInfo.androidInfo;
 
     setState(() {

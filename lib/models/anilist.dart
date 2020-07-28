@@ -9,14 +9,6 @@ class AnilistObject {
     data = json['data'] != null ? new AnilistData.fromJson(json['data']) : null;
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.data != null) {
-      data['data'] = this.data.toJson();
-    }
-    return data;
-  }
-
   static Future<AnilistObject> getInfo(int anilistId) async {
     var query = r'''
                 query ($id: Int) {
@@ -76,14 +68,6 @@ class AnilistData {
     media =
         json['Media'] != null ? new AnilistMedia.fromJson(json['Media']) : null;
   }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.media != null) {
-      data['Media'] = this.media.toJson();
-    }
-    return data;
-  }
 }
 
 class AnilistMedia {
@@ -123,23 +107,6 @@ class AnilistMedia {
     description = json['description'];
     source = json['source'];
   }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.title != null) {
-      data['title'] = this.title.toJson();
-    }
-    data['season'] = this.season;
-    data['seasonYear'] = this.seasonYear;
-    data['format'] = this.format;
-    data['status'] = this.status;
-    data['episodes'] = this.episodes;
-    data['isAdult'] = this.isAdult;
-    data['genres'] = this.genres;
-    data['description'] = this.description;
-    data['source'] = this.source;
-    return data;
-  }
 }
 
 class AnilistTitle {
@@ -155,14 +122,5 @@ class AnilistTitle {
     english = json['english'];
     native = json['native'];
     userPreferred = json['userPreferred'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['romaji'] = this.romaji;
-    data['english'] = this.english;
-    data['native'] = this.native;
-    data['userPreferred'] = this.userPreferred;
-    return data;
   }
 }

@@ -154,7 +154,8 @@ imageProvider(image) {
   if (image is File) {
     return ExtendedFileImageProvider(image);
   } else if (image is String) {
-    return ExtendedNetworkImageProvider(image, cache: true);
+    return ExtendedNetworkImageProvider(image,
+        cache: true, retries: 3, timeLimit: Duration(seconds: 15));
   } else if (image is List<int>) {
     return ExtendedMemoryImageProvider(image);
   }
@@ -261,7 +262,7 @@ class NoInfoException implements Exception {
 
   String toString() {
     if (message == null) return "Exception";
-    return "Couldn't get additional info : $message";
+    return "Sauce found but couldn't get additional info : $message";
   }
 }
 
@@ -408,8 +409,24 @@ void deleteObsoleteApk() async {
   });
 }
 
-Future<PackageInfo> appInfo() async {
-  return await PackageInfo.fromPlatform();
+class AppInfo extends ChangeNotifier {
+  String appName;
+  String packageName;
+  String version;
+
+  AppInfo() {
+    _init();
+  }
+
+  void _init() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    this.appName = packageInfo.appName;
+    this.packageName = packageInfo.packageName;
+    this.version = packageInfo.version;
+
+    notifyListeners();
+  }
 }
 
 enum SearchOption { SauceBot, Trace, SauceNao }
@@ -436,4 +453,39 @@ class EnumValues<T> {
 
 String returnTime(Duration time) {
   return "${(time.inHours > 0) ? (time.inHours.toString().padLeft(2, '0') + ':') : ""}${time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${time.inSeconds.remainder(60).toString().padLeft(2, '0')}";
+}
+
+String bbCodetoHtml(String input) {
+  var map = {
+    "[b]": "<b>",
+    "[/b]": "</b>",
+    "[u]": "<u>",
+    "[/u]": "</u>",
+    "[spoiler]": "<spoiler>",
+    "[/spoiler]": "</spoiler>",
+    "[hr]": "<hr>",
+  };
+
+  var url = RegExp(r'''\[url(?:\=("|\'|)?(.*)?\1)?\](.*)\[\/url\]''');
+
+  input = input.replaceAllMapped(url, (match) {
+    return "<a href='${match.group(2)}'>${match.group(3)}</a>";
+  });
+
+  var li = RegExp(r'\[\*\](.*?)(\n|\r\n?)');
+
+  input = input.replaceAllMapped(li, (match) {
+    return "<li>${match.group(1)}</li>";
+  });
+
+  var tag = RegExp(r'(\[(.*?)\])');
+
+  return input.replaceAllMapped(tag, (match) {
+    var temp = map[match[0]];
+    if (temp != null) {
+      return "$temp";
+    } else {
+      return "";
+    }
+  });
 }

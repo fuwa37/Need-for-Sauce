@@ -136,59 +136,6 @@ class MalObject {
             : List<String>.from(json["ending_themes"].map((x) => x)),
       );
 
-  Map<String, dynamic> toJson() => {
-        "request_hash": requestHash,
-        "request_cached": requestCached,
-        "request_cache_expiry": requestCacheExpiry,
-        "mal_id": malId,
-        "url": url,
-        "image_url": imageUrl,
-        "trailer_url": trailerUrl,
-        "title": title,
-        "title_english": titleEnglish,
-        "title_japanese": titleJapanese,
-        "title_synonyms": titleSynonyms == null
-            ? null
-            : List<dynamic>.from(titleSynonyms.map((x) => x)),
-        "type": type,
-        "source": source,
-        "episodes": episodes,
-        "status": status,
-        "airing": airing,
-        "aired": aired?.toJson(),
-        "duration": duration,
-        "rating": rating,
-        "score": score,
-        "scored_by": scoredBy,
-        "rank": rank,
-        "popularity": popularity,
-        "members": members,
-        "favorites": favorites,
-        "synopsis": synopsis,
-        "background": background,
-        "premiered": premiered,
-        "broadcast": broadcast,
-        "related": related?.toJson(),
-        "producers": producers == null
-            ? null
-            : List<dynamic>.from(producers.map((x) => x.toJson())),
-        "licensors": licensors == null
-            ? null
-            : List<dynamic>.from(licensors.map((x) => x.toJson())),
-        "studios": studios == null
-            ? null
-            : List<dynamic>.from(studios.map((x) => x.toJson())),
-        "genres": genres == null
-            ? null
-            : List<dynamic>.from(genres.map((x) => x.toJson())),
-        "opening_themes": openingThemes == null
-            ? null
-            : List<dynamic>.from(openingThemes.map((x) => x)),
-        "ending_themes": endingThemes == null
-            ? null
-            : List<dynamic>.from(endingThemes.map((x) => x)),
-      };
-
   static Future<MalObject> getInfo(int id) async {
     var response = await Sauce.mal().get("/${id.toString()}");
 
@@ -215,13 +162,6 @@ class MalAired {
         prop: json["prop"] == null ? null : MalTimeProp.fromJson(json["prop"]),
         string: json["string"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "from": from?.toIso8601String(),
-        "to": to?.toIso8601String(),
-        "prop": prop?.toJson(),
-        "string": string,
-      };
 }
 
 class MalTimeProp {
@@ -237,11 +177,6 @@ class MalTimeProp {
         from: json["from"] == null ? null : MalFrom.fromJson(json["from"]),
         to: json["to"] == null ? null : MalFrom.fromJson(json["to"]),
       );
-
-  Map<String, dynamic> toJson() => {
-        "from": from?.toJson(),
-        "to": to?.toJson(),
-      };
 }
 
 class MalFrom {
@@ -260,12 +195,6 @@ class MalFrom {
         month: json["month"],
         year: json["year"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "day": day,
-        "month": month,
-        "year": year,
-      };
 }
 
 class MalProp {
@@ -287,13 +216,6 @@ class MalProp {
         name: json["name"],
         url: json["url"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "mal_id": malId,
-        "type": type == null ? null : malTypeValues.reverse[type],
-        "name": name,
-        "url": url,
-      };
 }
 
 enum MalType { ANIME, MANGA }
@@ -343,25 +265,4 @@ class MalRelated {
             ? null
             : List<MalProp>.from(json["Other"].map((x) => MalProp.fromJson(x))),
       );
-
-  Map<String, dynamic> toJson() => {
-        "Adaptation": adaptation == null
-            ? null
-            : List<dynamic>.from(adaptation.map((x) => x.toJson())),
-        "Sequel": sequel == null
-            ? null
-            : List<dynamic>.from(sequel.map((x) => x.toJson())),
-        "Prequel": prequel == null
-            ? null
-            : List<dynamic>.from(prequel.map((x) => x.toJson())),
-        "Alternative version": alternativeVersion == null
-            ? null
-            : List<dynamic>.from(alternativeVersion.map((x) => x.toJson())),
-        "Side story": sideStory == null
-            ? null
-            : List<dynamic>.from(sideStory.map((x) => x.toJson())),
-        "Other": other == null
-            ? null
-            : List<dynamic>.from(other.map((x) => x.toJson())),
-      };
 }

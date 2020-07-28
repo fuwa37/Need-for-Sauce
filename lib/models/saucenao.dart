@@ -16,13 +16,6 @@ class SauceNaoObject {
             : List<SauceNaoResult>.from(json["results"]
                 .map((x) => SauceNaoResult.fromSauceNaoDataJson(x))),
       );
-
-  Map<String, dynamic> toJson() => {
-        "header": header?.toJson(),
-        "results": results == null
-            ? null
-            : List<dynamic>.from(results.map((x) => x.toJson())),
-      };
 }
 
 class SauceNaoHeader {
@@ -94,25 +87,6 @@ class SauceNaoHeader {
           ? null
           : json["results_returned"].toString(),
       message: json["message"]);
-
-  Map<String, dynamic> toJson() => {
-        "user_id": userId,
-        "account_type": accountType,
-        "short_limit": shortLimit,
-        "long_limit": longLimit,
-        "long_remaining": longRemaining,
-        "short_remaining": shortRemaining,
-        "status": status,
-        "results_requested": resultsRequested,
-        "index": (index == null) ? null : Map.from(index)
-            .map((k, v) => MapEntry<String, dynamic>(k, v.toJson())),
-        "search_depth": searchDepth,
-        "minimum_similarity": minimumSimilarity,
-        "query_image_display": queryImageDisplay,
-        "query_image": queryImage,
-        "results_returned": resultsReturned,
-        "message": message,
-      };
 }
 
 class SauceNaoIndex {
@@ -134,13 +108,6 @@ class SauceNaoIndex {
         id: json["id"],
         results: json["results"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "status": status,
-        "parent_id": parentId,
-        "id": id,
-        "results": results,
-      };
 }
 
 class SauceNaoResult {
@@ -162,12 +129,6 @@ class SauceNaoResult {
         header: SauceNaoResultHeader.fromJson(json["header"]),
         data: jsonToSauceNaoData(json["header"], json["data"]),
       );
-
-  Map<String, dynamic> toJson() => {
-        "header": header?.toJson(),
-        "data": data?.toJson(),
-      };
-
   SauceNaoResultDataAbstract toSauceNaoData() {
     switch (this.header.indexId) {
       case 5:
@@ -206,7 +167,7 @@ class SauceNaoResult {
       case 29:
       case 30:
         {
-          return SauceNaoDanYanGelKonSanApe621Idol912262527282930
+          return SauceNaoDanYanGelKonSane621Idol9122625272930
               .fromSauceNaoResultDataAbstract(this.data);
         }
       case 36:
@@ -278,11 +239,10 @@ class SauceNaoResult {
       case 25:
       case 26:
       case 27:
-      case 28:
       case 29:
       case 30:
         {
-          return SauceNaoDanYanGelKonSanApe621Idol912262527282930.fromJson(snd);
+          return SauceNaoDanYanGelKonSane621Idol9122625272930.fromJson(snd);
         }
       case 36:
         {
@@ -362,10 +322,11 @@ abstract class SauceNaoResultDataAbstract {
   String jpName;
   int nijieId;
   String url;
-
-  Map<String, dynamic> toJson();
+  List<String> addInfo;
 
   Map<String, dynamic> toJsonHtml();
+
+  Future<SauceNaoResultDataAbstract> withInfo();
 }
 
 class SauceNaoResultData extends SauceNaoResultDataAbstract {
@@ -396,13 +357,6 @@ class SauceNaoResultData extends SauceNaoResultDataAbstract {
         title: sn.title,
       );
 
-  Map<String, dynamic> toJson() => {
-        "ext_urls":
-            extUrls == null ? null : List<dynamic>.from(extUrls.map((x) => x)),
-        "title": title,
-        "source": source,
-      };
-
   Map<String, dynamic> toJsonHtml() => {
         "": title != null
             ? "<h4>$title</h4>"
@@ -411,6 +365,10 @@ class SauceNaoResultData extends SauceNaoResultDataAbstract {
             ? null
             : "<a href=${Uri.parse(extUrls[0]).host}>${extUrls[0]}</a>"
       };
+
+  Future<SauceNaoResultData> withInfo() async {
+    return this;
+  }
 }
 
 class SauceNaoResultHeader {
@@ -433,11 +391,4 @@ class SauceNaoResultHeader {
         indexId: json["index_id"],
         indexName: json["index_name"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "similarity": similarity,
-        "thumbnail": thumbnail,
-        "index_id": indexId,
-        "index_name": indexName,
-      };
 }

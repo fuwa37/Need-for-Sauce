@@ -1,4 +1,17 @@
-## 0.40
+## 0.4.5
+
+* Add more additional infos
+  *  MangaDex
+     *  View chapter's pages on result
+  *  Danbooru
+  *  Gelbooru
+  *  Konachan
+  *  Yande.re
+  *  e621
+* Fix crash on result page when title has ':' character
+* Remove Anime-Picture.net, return null from API
+
+## 0.4.0
 
 * Add analytics 
 * Add error and crash report

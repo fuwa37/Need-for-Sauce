@@ -243,6 +243,12 @@ class MangaDexObject {
             throw NoInfoException("Connection timeout");
           }
         case DioErrorType.RESPONSE:
+        {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No manga with id $id found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
         case DioErrorType.CANCEL:
         case DioErrorType.DEFAULT:
           {
@@ -250,9 +256,9 @@ class MangaDexObject {
           }
       }
     }
-    if (response == null) return null;
+    if (response?.data['manga'] == null) return null;
 
-    return MangaDexObject.fromJson(response.data);
+    return MangaDexObject.fromJson(response.data['manga']);
   }
 }
 
@@ -342,7 +348,7 @@ class MangaDexChapter {
         json["hash"] != null &&
         (json["page_array"] != null && json["page_array"] is List)) {
       pagesUrl = List.from(json["page_array"])
-          .map((e) => "${json['server']}${json['hast']}/$e")
+          .map((e) => "${json['server'].replaceAll('/data/','/data-saver/')}${json['hash']}/$e")
           .toList();
     } else {
       pagesUrl = null;
@@ -394,9 +400,16 @@ class MangaDexChapter {
             throw NoInfoException("Connection timeout");
           }
         case DioErrorType.RESPONSE:
+          {
+            if (e.response.statusCode == 404) {
+              throw NoInfoException("No chapter with id $id found");
+            }
+            throw NoInfoException("Couldn't connect to internet");
+          }
         case DioErrorType.CANCEL:
         case DioErrorType.DEFAULT:
           {
+            print(e.message);
             throw NoInfoException("Couldn't connect to mangadex.org");
           }
       }

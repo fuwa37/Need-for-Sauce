@@ -82,4 +82,37 @@ class Sauce {
 
     return Dio(options);
   }
+
+  static Dio booru(String path, String id) {
+    var url;
+    switch (path) {
+      case "danbooru":
+        url = "https://danbooru.donmai.us/posts/$id.json";
+        break;
+      case "gelbooru":
+        url =
+            "https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&id=$id";
+        break;
+      case "yandere":
+        url = "https://yande.re/post.json?tags=id:$id";
+        break;
+      case "konachan":
+        url = "https://konachan.net/post.json?tags=id:$id";
+        break;
+      case "e621":
+        url = "https://e621.net/posts/$id.json";
+        break;
+    }
+
+    BaseOptions options = new BaseOptions(
+      baseUrl: url,
+      receiveDataWhenStatusError: true,
+      connectTimeout: 15 * 1000,
+      queryParameters: {
+        "User-Agent": "NeedforSauce/0.4.1"
+      }
+    );
+
+    return Dio(options);
+  }
 }

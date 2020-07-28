@@ -1,5 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:need_for_sauce/models/models.dart';
@@ -12,6 +13,7 @@ import 'package:html/dom.dart' as dom hide Text;
 import 'package:cached_video_player/cached_video_player.dart';
 import 'package:need_for_sauce/common/video_control.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter_xlider/flutter_xlider.dart';
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -29,6 +31,8 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   ScrollController _helpController = ScrollController();
   Future<void> _init;
   final FirebaseAnalytics analytics = FirebaseAnalytics();
+  ValueNotifier<int> page = ValueNotifier(0);
+  PageController _pageController = PageController(initialPage: 0);
 
   void _videoListener() async {
     if (_videoPlayerController.value.position ==
@@ -158,37 +162,136 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   }
 
   Widget _imageShow() {
-    return ExtendedImage(
-        image: imageProvider(widget.sauce.imageUrl),
-        fit: BoxFit.fitWidth,
-        mode: ExtendedImageMode.none,
-        enableLoadState: true,
-        loadStateChanged: (ExtendedImageState state) {
-          switch (state.extendedImageLoadState) {
-            case LoadState.loading:
-              {
-                return Center(child: CircularProgressIndicator());
-              }
-            case LoadState.completed:
-              {
-                return ExtendedRawImage(
-                  image: state.extendedImageInfo?.image,
-                  fit: BoxFit.fitWidth,
-                );
-              }
-            case LoadState.failed:
-              {
-                return Center(
-                  child: Text("Failed to load image"),
-                );
-              }
-            default:
-              {
-                return Text("Failed");
-              }
-          }
-        });
+    if (widget.sauce.mangadexChapter == null) {
+      return ExtendedImage(
+          image: imageProvider(widget.sauce.imageUrl),
+          fit: BoxFit.fitWidth,
+          mode: ExtendedImageMode.none,
+          enableLoadState: true,
+          loadStateChanged: (ExtendedImageState state) {
+            switch (state.extendedImageLoadState) {
+              case LoadState.loading:
+                {
+                  return Center(child: CircularProgressIndicator());
+                }
+              case LoadState.completed:
+                {
+                  return ExtendedRawImage(
+                    image: state.extendedImageInfo?.image,
+                    fit: BoxFit.fitWidth,
+                  );
+                }
+              case LoadState.failed:
+                {
+                  return Center(
+                    child: Text("Failed to load image"),
+                  );
+                }
+              default:
+                {
+                  return Text("Failed");
+                }
+            }
+          });
+    } else {
+      return Container(
+        constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height / 1.25,
+            maxWidth: MediaQuery.of(context).size.width),
+        child: Stack(
+          children: [
+            PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  page.value = index;
+                },
+                reverse: true,
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.sauce.mangadexChapter.length,
+                itemBuilder: (context, index) {
+                  return ExtendedImage(
+                      image: imageProvider(widget.sauce.mangadexChapter[index]),
+                      mode: ExtendedImageMode.none,
+                      enableLoadState: true,
+                      loadStateChanged: (ExtendedImageState state) {
+                        switch (state.extendedImageLoadState) {
+                          case LoadState.loading:
+                            {
+                              return Center(child: CircularProgressIndicator());
+                            }
+                          case LoadState.completed:
+                            {
+                              return ExtendedRawImage(
+                                image: state.extendedImageInfo?.image,
+                                fit: BoxFit.contain,
+                              );
+                            }
+                          case LoadState.failed:
+                            {
+                              return Center(
+                                child: Text("Failed to load image"),
+                              );
+                            }
+                          default:
+                            {
+                              return Text("Failed");
+                            }
+                        }
+                      });
+                }),
+            Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  height: 48,
+                  child: ValueListenableBuilder(
+                      valueListenable: page,
+                      builder: (context, int index, child) {
+                        return FlutterSlider(
+                            rtl: true,
+                            step: FlutterSliderStep(
+                              isPercentRange: false,
+                            ),
+                            values: [index.toDouble()],
+                            onDragging: (index, a, b) {
+                              _pageController.jumpToPage(a.toInt());
+                            },
+                            max:
+                                widget.sauce.mangadexChapter.length.toDouble() -
+                                    1,
+                            min: 0,
+                            tooltip: FlutterSliderTooltip(
+                                disableAnimation: true,
+                                format: (value) {
+                                  value = value.split('.').first;
+                                  if (value == '0') {
+                                    return "Sauce";
+                                  }
+                                  return value;
+                                },
+                                textStyle: TextStyle(
+                                    fontSize: 12, color: Colors.white),
+                                boxStyle: FlutterSliderTooltipBox(
+                                    decoration:
+                                        BoxDecoration(color: Colors.blue))),
+                            handler: FlutterSliderHandler(
+                              child: Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                    color: Colors.blue, shape: BoxShape.circle),
+                              ),
+                              decoration: BoxDecoration(),
+                            ));
+                      }),
+                ))
+          ],
+        ),
+      );
+    }
   }
+
+  _pageListener() {}
 
   Widget sauceResult() {
     return Column(
@@ -219,12 +322,10 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                             launch(url);
                           } else {
                             if (url == 'help') {
-                              analytics.logEvent(
-                                  name: "help",
-                                  parameters: {
-                                    "dialog": "result",
-                                    "similarity": "${widget.sauce.similarity}"
-                                  });
+                              analytics.logEvent(name: "help", parameters: {
+                                "dialog": "result",
+                                "similarity": "${widget.sauce.similarity}"
+                              });
                               properImageHelp(context, _helpController);
                             }
                           }
@@ -237,6 +338,21 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                         'code': Style(
                             fontSize: FontSize(
                                 12 * MediaQuery.of(context).textScaleFactor)),
+                        'pre': Style(
+                            fontFamily: Theme.of(context)
+                                .textTheme
+                                .bodyText1
+                                .fontFamily,
+                            fontSize: FontSize(
+                                15 * MediaQuery.of(context).textScaleFactor))
+                      },
+                      customRender: {
+                        "spoiler": (context, child, attributes, element) {
+                          return child;
+                        },
+                        "li": (context, child, attributes, element) {
+                          return child;
+                        }
                       },
                     )),
                 Positioned(
@@ -303,34 +419,43 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _init = _initVideo();
+    if (widget.sauce.mangadexChapter != null)
+      widget.sauce.mangadexChapter.insert(0, widget.sauce.imageUrl);
+    _pageController.addListener(_pageListener);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.sauce.mangadexChapter != null)
+      widget.sauce.mangadexChapter.forEach((element) {
+        precacheImage(ExtendedNetworkImageProvider(element), context);
+      });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget?.sauce?.title ?? '',
-          softWrap: true,
+        appBar: AppBar(
+          title: Text(
+            widget?.sauce?.title ?? '',
+            softWrap: true,
+          ),
+          actions: [
+            IconButton(
+              tooltip: "Share",
+              onPressed: () {
+                Share.share(removeAllHtmlTags(widget.sauce.reply));
+                analytics.logShare(
+                    contentType: "${widget?.sauce?.title}",
+                    itemId: "${widget?.sauce?.reply?.substring(0, 48)}",
+                    method: "Share");
+              },
+              icon: Icon(Icons.share),
+            )
+          ],
         ),
-        actions: [
-          IconButton(
-            tooltip: "Share",
-            onPressed: () {
-              Share.share(removeAllHtmlTags(widget.sauce.reply));
-              analytics.logShare(
-                  contentType: "${widget?.sauce?.title}",
-                  itemId: "${widget?.sauce?.reply?.substring(0, 48)}",
-                  method: "Share");
-            },
-            icon: Icon(Icons.share),
-          )
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: sauceResult(),
-      ),
-    );
+        body: SingleChildScrollView(child: sauceResult()));
   }
 
   @override

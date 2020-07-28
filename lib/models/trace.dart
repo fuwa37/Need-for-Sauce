@@ -41,23 +41,6 @@ class TraceObject {
       });
     }
   }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['RawDocsCount'] = this.rawDocsCount;
-    data['RawDocsSearchTime'] = this.rawDocsSearchTime;
-    data['ReRankSearchTime'] = this.reRankSearchTime;
-    data['CacheHit'] = this.cacheHit;
-    data['trial'] = this.trial;
-    data['limit'] = this.limit;
-    data['limit_ttl'] = this.limitTtl;
-    data['quota'] = this.quota;
-    data['quota_ttl'] = this.quotaTtl;
-    if (this.docs != null) {
-      data['docs'] = this.docs.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
 }
 
 class TraceDocs {
@@ -133,30 +116,6 @@ class TraceDocs {
     isAdult = json['is_adult'];
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['from'] = this.from;
-    data['to'] = this.to;
-    data['anilist_id'] = this.anilistId;
-    data['at'] = this.at;
-    data['season'] = this.date;
-    data['anime'] = this.anime;
-    data['filename'] = this.filename;
-    data['episode'] = this.episode;
-    data['tokenthumb'] = this.tokenthumb;
-    data['similarity'] = this.similarity;
-    data['title'] = this.title;
-    data['title_native'] = this.titleNative;
-    data['title_chinese'] = this.titleChinese;
-    data['title_english'] = this.titleEnglish;
-    data['title_romaji'] = this.titleRomaji;
-    data['mal_id'] = this.malId;
-    data['synonyms'] = this.synonyms;
-    data['synonyms_chinese'] = this.synonymsChinese;
-    data['is_adult'] = this.isAdult;
-    return data;
-  }
-
   Map<String, dynamic> toJsonHtml() {
     String info = '';
 
@@ -184,8 +143,10 @@ class TraceDocs {
       "<b>Episode</b>": episode,
       "<b>Time</b>":
           "${returnTime(Duration(milliseconds: (at * 1000).toInt()))}",
-      "<b>Links</b>":
-          "<a href='https://anilist.co/anime/$anilistId'>AniList</a>${(malId == null) ? null : " | <a href='https://myanimelist.net/anime/$malId'>MyAnimeList</a>"}",
+      "<b>Links</b>": "<a href='https://anilist.co/anime/$anilistId'>AniList</a>" +
+          ((malId == null)
+              ? ''
+              : " | <a href='https://myanimelist.net/anime/$malId'>MyAnimeList</a>"),
       "<b>Info</b>": (info?.isNotEmpty ?? false) ? info : null,
       "<b>Genres</b>": genres?.join(', '),
       "<b>Source</b>": source,

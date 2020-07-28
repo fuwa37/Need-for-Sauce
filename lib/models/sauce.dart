@@ -80,7 +80,7 @@ class SauceObject {
   SauceObject.fromSauceNao(
       SauceNaoResultHeader header, SauceNaoResultDataAbstract data) {
     source = '<p>Powered by <a href="https://saucenao.com/">SauceNAO</a>';
-    if (data is SauceNaoH18 && data.addInfo != null) {
+    if (data?.addInfo != null) {
       source += ' & <a href=${data.addInfo[1]}>${data.addInfo[0]}</a>';
     }
     source += '</p>';
@@ -96,16 +96,21 @@ class SauceObject {
         if (key.isEmpty) {
           output += "$value";
         } else {
-          output += "<p>$key : $value</p>";
+          try {
+            if (value?.isNotEmpty ?? false) output += "<p>$key : $value</p>";
+          } on Exception catch (e) {
+            print(e);
+            output += "<p>$key : $value</p>";
+          }
         }
       }
     });
-
     similarity = double.parse(header.similarity);
     imageUrl = header.thumbnail;
     title = data.title != null
         ? data.title
-        : (data.source.isEmpty || Uri.parse(data.source).isAbsolute)
+        : (data.source.isEmpty ||
+                (Uri.tryParse(data.source)?.isAbsolute ?? false))
             ? ''
             : data.source + "${(data.part == null) ? '' : (' - ' + data.part)}";
     reply = output;

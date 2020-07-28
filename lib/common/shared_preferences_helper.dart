@@ -31,7 +31,7 @@ const Map<String, dynamic> indexSauceNaoDB = {
   "Gelbooru": '1',
   "Konachan": '1',
   // "index_sankaku": '1',
-  "Anime-Pictures": '1',
+  // "Anime-Pictures": '1', always return null
   "e621": '1',
   "Idol Complex": '1',
   "bcy Illust": '1',
@@ -54,7 +54,7 @@ String sauceNaoDBMask(Map<String, String> index) {
           index['bcy Illust'] +
           index['Idol Complex'] +
           index['e621'] +
-          index['Anime-Pictures'] +
+          (index['Anime-Pictures'] ?? '0') +
           (index['index_sankaku'] ?? '0') +
           index['Konachan'] +
           index['Gelbooru'] +

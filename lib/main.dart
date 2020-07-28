@@ -42,8 +42,10 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 void main() {
   FlutterError.onError = Crashlytics.instance.recordFlutterError;
 
-  runApp(ChangeNotifierProvider(
-      create: (context) => LoadingNotifier(), child: MyApp()));
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(create: (context) => LoadingNotifier()),
+    ChangeNotifierProvider(create: (context) => AppInfo()),
+  ], child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -426,13 +428,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 var sauces = SauceNaoObject.fromJson(r.data);
                 if (sauces?.results != null) {
                   var sauce = sauces.results[0];
-                  var data = sauce.toSauceNaoData();
-                  if (data is SauceNaoH18 && _searchOptionNotifier.getAddInfo) {
+                  sauce.data = sauce.toSauceNaoData();
+                  if (_searchOptionNotifier.getAddInfo) {
                     analytics.logSelectContent(
                         contentType: "search_options", itemId: "addinfo");
-
                     try {
-                      sauce.data = await data.withInfo();
+                      sauce.data = await sauce.data.withInfo();
                       _loadingNotifier.popDialog();
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
@@ -653,9 +654,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   _addInfoHelp() {
-    analytics.logEvent(name: "help", parameters: {
-      "dialog": "addinfo"
-    });
+    analytics.logEvent(name: "help", parameters: {"dialog": "addinfo"});
     showDialog(
         context: context,
         builder: (context) {
@@ -702,9 +701,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   _searchEngineHelp() {
-    analytics.logEvent(name: "help", parameters: {
-      "dialog": "search_engine"
-    });
+    analytics.logEvent(name: "help", parameters: {"dialog": "search_engine"});
     showDialog(
         context: context,
         builder: (context) {

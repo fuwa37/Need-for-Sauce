@@ -19,14 +19,6 @@ class NhentaiResults {
         numPages: json["num_pages"],
         perPage: json["per_page"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "result": result == null
-            ? null
-            : List<dynamic>.from(result.map((x) => x.toJson())),
-        "num_pages": numPages,
-        "per_page": perPage,
-      };
 }
 
 class NhentaiResult {
@@ -69,20 +61,6 @@ class NhentaiResult {
         numPages: json["num_pages"],
         numFavorites: json["num_favorites"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "media_id": mediaId,
-        "title": title?.toJson(),
-        "images": images?.toJson(),
-        "scanlator": scanlator,
-        "upload_date": uploadDate,
-        "tags": tags == null
-            ? null
-            : List<dynamic>.from(tags.map((x) => x.toJson())),
-        "num_pages": numPages,
-        "num_favorites": numFavorites,
-      };
 
   static Future<NhentaiResult> getInfo(String source) async {
     var response;
@@ -144,14 +122,6 @@ class NhentaiImages {
             ? null
             : NhentaiCover.fromJson(json["thumbnail"]),
       );
-
-  Map<String, dynamic> toJson() => {
-        "pages": pages == null
-            ? null
-            : List<dynamic>.from(pages.map((x) => x.toJson())),
-        "cover": cover?.toJson(),
-        "thumbnail": thumbnail?.toJson(),
-      };
 }
 
 class NhentaiCover {
@@ -170,12 +140,6 @@ class NhentaiCover {
         w: json["w"],
         h: json["h"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "t": tValues.reverse[t],
-        "w": w,
-        "h": h,
-      };
 }
 
 enum T { J, P, G }
@@ -204,14 +168,6 @@ class NhentaiTag {
         url: json["url"],
         count: json["count"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "type": nhentaiTypeValues.reverse[type],
-        "name": name,
-        "url": url,
-        "count": count,
-      };
 }
 
 enum Type { LANGUAGE, PARODY, GROUP, ARTIST, TAG, CATEGORY, CHARACTER }
@@ -243,9 +199,4 @@ class NhentaiTitle {
         pretty: json["pretty"],
       );
 
-  Map<String, dynamic> toJson() => {
-        "english": english,
-        "japanese": japanese,
-        "pretty": pretty,
-      };
 }
