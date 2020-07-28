@@ -321,7 +321,7 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
                   : " | <a href='https://myanimelist.net/anime/$malId'>MyAnimeList</a>"),
       "<b>Info</b>": (info?.isNotEmpty ?? false) ? info : null,
       "<b>Genres</b>": genres?.join(', '),
-      "<b>Source</b>": source,
+      "<b>Source</b>": sourceMaterial,
       "<b>Description</b>": description
     };
   }
