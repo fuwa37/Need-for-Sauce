@@ -13,8 +13,7 @@
 
 ## 0.4.0
 
-* Add analytics 
-* Add error and crash report
+* Add Firebase Analytics and Crashlytics
 
 ## 0.3.6
 
