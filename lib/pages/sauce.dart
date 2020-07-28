@@ -399,7 +399,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
     if (links.isNotEmpty) {
       links.forEach((element) {
         var link = element.attributes["href"];
-        replaced = replaced.replaceAll(element.text, link);
+        replaced = replaced.replaceAll(element.text, "$link\n");
       });
     }
 
@@ -409,7 +409,13 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
 
     if (ps.isNotEmpty)
       ps.forEach((f) {
-        if (f.text != '') cleanStrings.add(f.text);
+        if (f.text != '') {
+          cleanStrings.add(f.text);
+        }
+        if (f.text == "Description : ") {
+          dom.Element pre = parsed.querySelector('pre');
+          cleanStrings.add(pre?.text ?? '');
+        }
       });
 
     return cleanStrings.join('\n');
