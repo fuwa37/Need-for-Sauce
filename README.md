@@ -28,7 +28,7 @@ Search for source of anime, manga, artwork and many more.
 
 * [ ] More configurations in Options
 * [x] ~~Add tooltip to explain each of options~~
-* [ ] Implement on-the-air update (auto-updater)
+* [ ] Implement over-the-air update (auto-updater)
 * [x] ~~App's icon~~
 * [ ] **Better app's icon**
 * [x] ~~App's about page~~
