@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:open_file/open_file.dart';
-import 'package:package_info/package_info.dart';
 import 'package:device_info/device_info.dart';
 import 'package:need_for_sauce/common/common.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,7 +15,6 @@ import 'package:provider/provider.dart';
 import 'package:markdown/markdown.dart' show markdownToHtml;
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
-import 'package:provider/provider.dart';
 
 class UpdateDialog extends StatefulWidget {
   final String oldV;

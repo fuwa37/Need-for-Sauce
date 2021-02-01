@@ -10,10 +10,10 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom hide Text;
-import 'package:cached_video_player/cached_video_player.dart';
 import 'package:need_for_sauce/common/video_control.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
+import 'package:chewie/chewie.dart' hide ChewieProgressColors;
+import 'package:video_player/video_player.dart';
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -27,11 +27,12 @@ class SauceDesc extends StatefulWidget {
 }
 
 class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
-  CachedVideoPlayerController _videoPlayerController;
+  VideoPlayerController _videoPlayerController;
+  ChewieController _chewieController;
   ScrollController _helpController = ScrollController();
   Future<void> _init;
-  final FirebaseAnalytics analytics = FirebaseAnalytics();
   ValueNotifier<int> page = ValueNotifier(0);
+  ValueNotifier<Widget> media = ValueNotifier(Container());
   PageController _pageController = PageController(initialPage: 0);
 
   void _videoListener() async {
@@ -39,13 +40,15 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
         _videoPlayerController.value.duration) {
       print("completed");
     }
-    setState(() {});
+    if (_videoPlayerController.value.hasError) {
+      media.value = _imageShow();
+    }
   }
 
   Future<void> _initVideo() async {
     if (widget.sauce?.videoUrl != null ?? false) {
       _videoPlayerController =
-          CachedVideoPlayerController.network(widget.sauce.videoUrl);
+          VideoPlayerController.network(widget.sauce.videoUrl);
     } else {
       return;
     }
@@ -54,6 +57,8 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
     _videoPlayerController.setLooping(true);
     try {
       await _videoPlayerController.initialize();
+      _chewieController = ChewieController(
+          videoPlayerController: _videoPlayerController, showControls: false);
     } on Exception catch (e) {
       print(e);
     }
@@ -147,8 +152,8 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
               ? Column(
                   children: [
                     AspectRatio(
-                      child: CachedVideoPlayer(
-                        _videoPlayerController,
+                      child: Chewie(
+                        controller: _chewieController,
                       ),
                       aspectRatio: _videoPlayerController.value.aspectRatio,
                     ),
@@ -298,8 +303,15 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         (widget.sauce.videoUrl == null)
-            ? (widget.sauce.imageUrl == null) ? Container() : _imageShow()
-            : _videoPlayer(),
+            ? (widget.sauce.imageUrl == null)
+                ? Container()
+                : _imageShow()
+            : ValueListenableBuilder(
+                valueListenable: media,
+                builder: (context, Widget value, child) {
+                  return value;
+                },
+              ),
         Padding(
             padding: EdgeInsets.all(8),
             child: Stack(
@@ -322,10 +334,6 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                             launch(url);
                           } else {
                             if (url == 'help') {
-                              analytics.logEvent(name: "help", parameters: {
-                                "dialog": "result",
-                                "similarity": "${widget.sauce.similarity}"
-                              });
                               properImageHelp(context, _helpController);
                             }
                           }
@@ -425,6 +433,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _init = _initVideo();
+    media.value = _videoPlayer();
     if (widget.sauce.mangadexChapter != null)
       widget.sauce.mangadexChapter.insert(0, widget.sauce.imageUrl);
     _pageController.addListener(_pageListener);
@@ -452,10 +461,6 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
               tooltip: "Share",
               onPressed: () {
                 Share.share(removeAllHtmlTags(widget.sauce.reply));
-                analytics.logShare(
-                    contentType: "${widget?.sauce?.title}",
-                    itemId: "${widget?.sauce?.reply?.substring(0, 48)}",
-                    method: "Share");
               },
               icon: Icon(Icons.share),
             )

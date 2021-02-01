@@ -1,7 +1,7 @@
 // From Chewie package
 
 import 'package:flutter/material.dart';
-import 'package:cached_video_player/cached_video_player.dart';
+import 'package:video_player/video_player.dart';
 
 class MaterialVideoProgressBar extends StatefulWidget {
   MaterialVideoProgressBar(
@@ -12,7 +12,7 @@ class MaterialVideoProgressBar extends StatefulWidget {
     this.onDragUpdate,
   }) : colors = colors ?? ChewieProgressColors();
 
-  final CachedVideoPlayerController controller;
+  final VideoPlayerController controller;
   final ChewieProgressColors colors;
   final Function() onDragStart;
   final Function() onDragEnd;
@@ -34,7 +34,7 @@ class _VideoProgressBarState extends State<MaterialVideoProgressBar> {
   VoidCallback listener;
   bool _controllerWasPlaying = false;
 
-  CachedVideoPlayerController get controller => widget.controller;
+  VideoPlayerController get controller => widget.controller;
 
   @override
   void initState() {
@@ -125,7 +125,7 @@ class _VideoProgressBarState extends State<MaterialVideoProgressBar> {
 class _ProgressBarPainter extends CustomPainter {
   _ProgressBarPainter(this.value, this.colors);
 
-  CachedVideoPlayerValue value;
+  VideoPlayerValue value;
   ChewieProgressColors colors;
 
   @override
@@ -195,13 +195,23 @@ String formatDuration(Duration position) {
   var minutes = seconds ~/ 60;
   seconds = seconds % 60;
 
-  final hoursString = hours >= 10 ? '$hours' : hours == 0 ? '00' : '0$hours';
+  final hoursString = hours >= 10
+      ? '$hours'
+      : hours == 0
+          ? '00'
+          : '0$hours';
 
-  final minutesString =
-      minutes >= 10 ? '$minutes' : minutes == 0 ? '00' : '0$minutes';
+  final minutesString = minutes >= 10
+      ? '$minutes'
+      : minutes == 0
+          ? '00'
+          : '0$minutes';
 
-  final secondsString =
-      seconds >= 10 ? '$seconds' : seconds == 0 ? '00' : '0$seconds';
+  final secondsString = seconds >= 10
+      ? '$seconds'
+      : seconds == 0
+          ? '00'
+          : '0$seconds';
 
   final formattedTime =
       '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';

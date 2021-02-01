@@ -36,12 +36,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart';
 import 'package:rect_getter/rect_getter.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 
 void main() {
-  FlutterError.onError = Crashlytics.instance.recordFlutterError;
-
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => LoadingNotifier()),
     ChangeNotifierProvider(create: (context) => AppInfo()),
@@ -55,15 +51,17 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    return MaterialApp(
-      title: "Need for Sauce",
-      home: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (context) => ImageNotifier()),
-          ChangeNotifierProvider(create: (context) => ErrorBannerNotifier()),
-          ChangeNotifierProvider(create: (context) => SearchOptionNotifier())
-        ],
-        child: HomePage(),
+    return ScreenUtilInit(
+      child: MaterialApp(
+        title: "Need for Sauce",
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (context) => ImageNotifier()),
+            ChangeNotifierProvider(create: (context) => ErrorBannerNotifier()),
+            ChangeNotifierProvider(create: (context) => SearchOptionNotifier())
+          ],
+          child: HomePage(),
+        ),
       ),
     );
   }
@@ -85,16 +83,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   var _optionKey = RectGetter.createGlobalKey();
   ValueNotifier<double> _paddingOption = ValueNotifier(0);
   AnimationController _rotateAnimationController;
-  final FirebaseAnalytics analytics = FirebaseAnalytics();
+  String _sauceNaoApi;
 
   _getMedia({File videoIntent}) async {
     print(await Permission.mediaLibrary.request());
     print(await Permission.storage.request());
+    FilePickerResult result;
     ImageNotifier _imageNotifier =
         Provider.of<ImageNotifier>(context, listen: false);
 
-    File media = videoIntent ?? await FilePicker.getFile(type: FileType.media);
-    if (media == null && videoIntent == null) return;
+    if (videoIntent == null) result = await FilePicker.platform.pickFiles();
+    if (result == null && videoIntent == null) return;
+
+    File media = videoIntent ?? File(result.files.single.path);
     var fileType = lookupMimeType(media.path).split('/');
 
     if (fileType[0] == 'image') {
@@ -106,10 +107,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }));
 
         if (result == null) _getMedia();
-        analytics.logSelectContent(contentType: "media", itemId: ".gif");
         _imageNotifier.setImage(result);
       } else {
-        analytics.logSelectContent(contentType: "media", itemId: ".image");
         _imageNotifier.setImage(media);
       }
     } else if (fileType[0] == 'video') {
@@ -118,7 +117,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return VideoCapture(media ?? videoIntent);
       }));
       if (result == null && videoIntent == null) _getMedia();
-      analytics.logSelectContent(contentType: "media", itemId: ".video");
       _imageNotifier.setImage(result);
     } else {
       return;
@@ -135,7 +133,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (result == null) return;
 
     if (result != null) {
-      analytics.logEvent(name: "edit");
       _imageNotifier.setImage(result);
     }
   }
@@ -166,11 +163,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return GifCapture(url);
         }));
         if (result == null) _getMedia();
-        analytics.logSelectContent(contentType: "url", itemId: ".gif");
         _imageNotifier.setImage(result);
         _loadingNotifier.popDialog();
       } else {
-        analytics.logSelectContent(contentType: "url", itemId: ".image");
         _imageNotifier.setImage(url);
       }
       _loadingNotifier.popDialog();
@@ -180,7 +175,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
         return VideoCapture(url);
       }));
-      analytics.logSelectContent(contentType: "url", itemId: ".video");
       _imageNotifier.setImage(result);
       _loadingNotifier.popDialog();
       return;
@@ -310,9 +304,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }*/
 
   Future<Response> _sauceNaoConn() async {
-    analytics.logSelectContent(
-        contentType: "search_options", itemId: "saucenao");
-
     var mask =
         sauceNaoDBMask(context.read<SearchOptionNotifier>().sauceNaoMask);
     var image = context.read<ImageNotifier>().image;
@@ -321,7 +312,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     if (image is String) {
       try {
-        return await Sauce.sauceNao(mask)
+        return await Sauce.sauceNao(mask, _sauceNaoApi)
             .get("&url=" + Uri.encodeComponent(image), cancelToken: token);
       } on DioError catch (e) {
         throw e;
@@ -332,7 +323,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
 
       try {
-        return await Sauce.sauceNao(mask)
+        return await Sauce.sauceNao(mask, _sauceNaoApi)
             .post("", data: formData, cancelToken: token);
       } on DioError catch (e) {
         if (e?.response?.statusCode == 429 ?? false) {
@@ -344,8 +335,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<Response> _traceConn() async {
-    analytics.logSelectContent(contentType: "search_options", itemId: "trace");
-
     var image = context.read<ImageNotifier>().image;
     var token = CancelToken();
     loadingDialog(scaffoldContext: _scaffoldKey.currentContext, token: token);
@@ -360,7 +349,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       FormData formData = FormData.fromMap({
         "image": (image is File)
             ? base64Encode(image.readAsBytesSync())
-            : (image is List<int>) ? base64Encode(image) : null,
+            : (image is List<int>)
+                ? base64Encode(image)
+                : null,
       });
 
       try {
@@ -430,8 +421,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   var sauce = sauces.results[0];
                   sauce.data = sauce.toSauceNaoData();
                   if (_searchOptionNotifier.getAddInfo) {
-                    analytics.logSelectContent(
-                        contentType: "search_options", itemId: "addinfo");
                     try {
                       sauce.data = await sauce.data.withInfo();
                       _loadingNotifier.popDialog();
@@ -564,8 +553,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               if (sauces.docs != null) {
                 var sauce = sauces.docs[0];
                 if (_searchOptionNotifier.getAddInfo) {
-                  analytics.logSelectContent(
-                      contentType: "search_options", itemId: "addinfo");
                   try {
                     sauce = await sauce.withInfo();
                     _loadingNotifier.popDialog();
@@ -654,7 +641,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   _addInfoHelp() {
-    analytics.logEvent(name: "help", parameters: {"dialog": "addinfo"});
     showDialog(
         context: context,
         builder: (context) {
@@ -701,7 +687,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   _searchEngineHelp() {
-    analytics.logEvent(name: "help", parameters: {"dialog": "search_engine"});
     showDialog(
         context: context,
         builder: (context) {
@@ -852,9 +837,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       renderPanelSheet: true,
       panel: Consumer<SearchOptionNotifier>(
           builder: (context, searchOptionNotifier, child) {
-        var _widthConstraint = (ScreenUtil.screenWidth - 32) / 3;
+        var _widthConstraint = (ScreenUtil().screenWidth - 32) / 3;
         if (_widthConstraint < 125)
-          _widthConstraint = (ScreenUtil.screenWidth - 32) / 2;
+          _widthConstraint = (ScreenUtil().screenWidth - 32) / 2;
         return RectGetter(
             key: _optionKey,
             child: Padding(
@@ -1093,7 +1078,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.initState();
     deleteObsoleteApk();
 
-    analytics.logAppOpen();
+    SharedPreferencesUtils.getApi().then((api) {
+      _sauceNaoApi = api;
+    });
 
     _rotateAnimationController = AnimationController(
         duration: const Duration(milliseconds: 100), vsync: this);
@@ -1105,7 +1092,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
         .listen((List<SharedMediaFile> value) {
       if (value?.isNotEmpty ?? false) {
-        analytics.logEvent(name: "intent");
         if (value[0].type == SharedMediaType.IMAGE) {
           _imageNotifier.setImage(File(value[0].path));
         } else if (value[0].type == SharedMediaType.VIDEO) {
@@ -1119,7 +1105,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // For sharing images coming from outside the app while the app is closed
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value?.isNotEmpty ?? false) {
-        analytics.logEvent(name: "intent");
         if (value[0].type == SharedMediaType.IMAGE) {
           _imageNotifier.setImage(File(value[0].path));
         } else if (value[0].type == SharedMediaType.VIDEO) {
@@ -1132,7 +1117,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _intentDataStreamSubscription =
         ReceiveSharingIntent.getTextStream().listen((String value) {
       if (value?.isNotEmpty ?? false) {
-        analytics.logEvent(name: "intent");
         _checkURLContentType(value);
       }
     }, onError: (err) {
@@ -1142,7 +1126,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // For sharing or opening urls/text coming from outside the app while the app is closed
     ReceiveSharingIntent.getInitialText().then((String value) {
       if (value?.isNotEmpty ?? false) {
-        analytics.logEvent(name: "intent");
         _checkURLContentType(value);
       }
     });
@@ -1152,7 +1135,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    ScreenUtil.init(context);
     return WillPopScope(
       onWillPop: () {
         if (!_panelController.isPanelClosed) {

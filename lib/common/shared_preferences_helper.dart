@@ -1,10 +1,17 @@
+import 'dart:math';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:need_for_sauce/models/models.dart';
 import 'dart:convert';
 import 'package:need_for_sauce/common/common.dart';
 
+const api_key1 = String.fromEnvironment('api_key1');
+const api_key2 = String.fromEnvironment('api_key2');
+
+List<String> apis = [api_key1, api_key2];
+
 // Based on https://saucenao.com/tools/examples/api/identify_images_v1.1.py
-// Commented index, site closed or index API broken/not updated
+// Commented index, site closed or index API broken/not updated/disabled
 const Map<String, dynamic> indexSauceNaoDB = {
   // "index_hmags": '1',
   // "index_reserved": '1',
@@ -41,11 +48,21 @@ const Map<String, dynamic> indexSauceNaoDB = {
   "Pawoo": '1',
   // "index_madokami": '1',
   "MangaDex": '1',
+  "E-Hentai": '1',
+  "ArtStation": '1',
+  "FurAffinity": '1',
+  "Twitter": '1',
+  "Furry Network": '1',
 };
 
 String sauceNaoDBMask(Map<String, String> index) {
   var dbmask = int.parse(
-      (index["MangaDex"] +
+      (index["Furry Network"] +
+          index["Twitter"] +
+          index["FurAffinity"] +
+          index["ArtStation"] +
+          index["E-Hentai"] +
+          index["MangaDex"] +
           (index['index_madokami'] ?? '0') +
           index['Pawoo'] +
           index['devianArt'] +
@@ -96,6 +113,26 @@ class SharedPreferencesUtils {
     }
 
     return _prefs;
+  }
+
+  static Future<bool> setApi(String api) async {
+    var prefs = await getPrefs();
+
+    return prefs.setString("api_key", api);
+  }
+
+  static Future<String> getApi() async {
+    var prefs = await getPrefs();
+
+    String api = prefs.getString("api_key");
+
+    if (api == null) {
+      final _random = new Random();
+
+      api = apis[_random.nextInt(apis.length)];
+    }
+
+    return api;
   }
 
   static Future<bool> setAllIndexes(bool val) async {

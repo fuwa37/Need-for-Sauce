@@ -1,20 +1,10 @@
 import 'package:dio/dio.dart';
 
 class Sauce {
-  static Dio sauceBot() {
-    BaseOptions options = new BaseOptions(
-      baseUrl: 'https://sauce-bot.irs37.repl.co',
-      receiveDataWhenStatusError: true,
-      connectTimeout: 15 * 1000,
-    );
-
-    return Dio(options);
-  }
-
-  static Dio sauceNao(dbmask, {int minsim = 70, int numres = 6}) {
+  static Dio sauceNao(dbmask, api, {int minsim = 70, int numres = 6}) {
     BaseOptions options = new BaseOptions(
       baseUrl:
-          'https://saucenao.com/search.php?db=999&output_type=2&minsim=$minsim&numres=$numres&dbmask=$dbmask',
+          'https://saucenao.com/search.php?db=999&output_type=2&minsim=$minsim&numres=$numres&dbmask=$dbmask&api_key=$api',
       receiveDataWhenStatusError: true,
       connectTimeout: 15 * 1000,
     );
@@ -105,13 +95,10 @@ class Sauce {
     }
 
     BaseOptions options = new BaseOptions(
-      baseUrl: url,
-      receiveDataWhenStatusError: true,
-      connectTimeout: 15 * 1000,
-      queryParameters: {
-        "User-Agent": "NeedforSauce/0.4.1"
-      }
-    );
+        baseUrl: url,
+        receiveDataWhenStatusError: true,
+        connectTimeout: 15 * 1000,
+        queryParameters: {"User-Agent": "NeedforSauce/0.4.1"});
 
     return Dio(options);
   }

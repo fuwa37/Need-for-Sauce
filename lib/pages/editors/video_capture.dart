@@ -1,14 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'dart:io';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:cached_video_player/cached_video_player.dart';
+import 'package:chewie/chewie.dart' hide ChewieProgressColors;
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart' show LoadingNotifier;
 import 'package:need_for_sauce/common/common.dart' show loadingDialog;
 import 'package:need_for_sauce/common/video_control.dart';
-
 
 class VideoCapture extends StatefulWidget {
   final _video;
@@ -23,14 +23,11 @@ class VideoCapture extends StatefulWidget {
 
 class _VideoCaptureState extends State<VideoCapture>
     with TickerProviderStateMixin {
-  CachedVideoPlayerController _videoPlayerController;
+  ChewieController _chewieController;
+  VideoPlayerController _videoPlayerController;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   double value = 0;
   Future<void> _init;
-
-  void _videoListener() async {
-    setState(() {});
-  }
 
   Future<Uint8List> _thumbnail() async {
     Uint8List thumb;
@@ -70,16 +67,14 @@ class _VideoCaptureState extends State<VideoCapture>
 
   Future<void> _initVideo() async {
     if (widget._video is File) {
-      print("file");
-      _videoPlayerController = CachedVideoPlayerController.file(widget._video);
+      _videoPlayerController = VideoPlayerController.file(widget._video);
     } else if (widget._video is String) {
-      print("Url");
-      _videoPlayerController =
-          CachedVideoPlayerController.network(widget._video);
+      _videoPlayerController = VideoPlayerController.network(widget._video);
     }
     _videoPlayerController.setVolume(0);
     await _videoPlayerController.initialize();
-    _videoPlayerController.addListener(_videoListener);
+    _chewieController = ChewieController(
+        videoPlayerController: _videoPlayerController, showControls: false);
   }
 
   Widget _bab() {
@@ -189,8 +184,8 @@ class _VideoCaptureState extends State<VideoCapture>
                         (MediaQuery.of(context).padding.bottom),
                     child: Center(
                       child: AspectRatio(
-                        child: CachedVideoPlayer(
-                          _videoPlayerController,
+                        child: Chewie(
+                          controller: _chewieController,
                         ),
                         aspectRatio: _videoPlayerController.value.aspectRatio,
                       ),
@@ -256,6 +251,7 @@ class _VideoCaptureState extends State<VideoCapture>
   @override
   void dispose() {
     _videoPlayerController.dispose();
+    _chewieController.dispose();
     super.dispose();
   }
 }
