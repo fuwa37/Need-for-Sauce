@@ -8,7 +8,7 @@ class ImageNotifier extends ChangeNotifier {
   dynamic image;
   bool isImageLoaded = false;
 
-  void setLoaded(bool isLoaded){
+  void setLoaded(bool isLoaded) {
     isImageLoaded = isLoaded;
     notifyListeners();
   }

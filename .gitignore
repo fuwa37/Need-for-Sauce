@@ -23,10 +23,10 @@ local.properties
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
 #.vscode/
-*.code-workspace
 
 # Flutter/Dart/Pub related
 **/doc/api/
+**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -34,11 +34,12 @@ local.properties
 .pub-cache/
 .pub/
 /build/
-analysis_options.yaml
 
 # Web related
 lib/generated_plugin_registrant.dart
 
-# Exceptions to above rules.
-!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
-android/app/google-services.json
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json

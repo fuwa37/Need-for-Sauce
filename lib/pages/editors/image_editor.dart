@@ -32,7 +32,7 @@ class _ImageEditorState extends State<ImageEditor> {
   TextEditingController _textAspectRatioWController = TextEditingController();
   TextEditingController _textAspectRatioHController = TextEditingController();
 
-  EditorConfig _editorConfig() {
+  EditorConfig get _editorConfig {
     return EditorConfig(
         maxScale: 8.0,
         editorMaskColorHandler: (BuildContext context, bool pointerdown) {
@@ -53,7 +53,7 @@ class _ImageEditorState extends State<ImageEditor> {
       enableLoadState: true,
       extendedImageEditorKey: editorKey,
       initEditorConfigHandler: (state) {
-        return _editorConfig();
+        return _editorConfig;
       },
     );
   }
@@ -344,8 +344,10 @@ class _ImageEditorState extends State<ImageEditor> {
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: List.from(_cropAspectRatios
                                           .map((item) => _cropItems(item)))),
                                 ),

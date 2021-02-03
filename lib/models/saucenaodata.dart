@@ -81,7 +81,7 @@ class SauceNaoPixiv56 extends SauceNaoResultDataAbstract {
 class SauceNaoDeviantArt34 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
-  int daId;
+  String daId;
   String authorName;
   String authorUrl;
 
@@ -908,8 +908,7 @@ class SauceNaoDanYanGelKonSane621Idol9122625272930
         "<b>Material(s)</b>": material,
         "<b>Character(s)</b>":
             (characters?.isEmpty ?? true) ? null : characters,
-        "<b>Tags(s)</b>":
-            (tags?.isEmpty ?? true) ? null : tags,
+        "<b>Tags(s)</b>": (tags?.isEmpty ?? true) ? null : tags,
         "<b>Alt. Source</b>": source == null
             ? null
             : Uri.parse(source).isAbsolute

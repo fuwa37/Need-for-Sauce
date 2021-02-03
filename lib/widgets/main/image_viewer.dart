@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:extended_image/extended_image.dart';
-import 'package:need_for_sauce/common/common.dart'
-    show imageProvider;
+import 'package:need_for_sauce/common/common.dart' show imageProvider;
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart' show ImageNotifier;
 

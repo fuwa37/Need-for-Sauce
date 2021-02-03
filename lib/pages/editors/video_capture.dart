@@ -1,10 +1,9 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:chewie/chewie.dart' hide ChewieProgressColors;
+import 'package:chewie/chewie.dart';
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart' show LoadingNotifier;
 import 'package:need_for_sauce/common/common.dart' show loadingDialog;
@@ -28,6 +27,10 @@ class _VideoCaptureState extends State<VideoCapture>
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   double value = 0;
   Future<void> _init;
+
+  void _videoListener() {
+    setState(() {});
+  }
 
   Future<Uint8List> _thumbnail() async {
     Uint8List thumb;
@@ -72,6 +75,7 @@ class _VideoCaptureState extends State<VideoCapture>
       _videoPlayerController = VideoPlayerController.network(widget._video);
     }
     _videoPlayerController.setVolume(0);
+    _videoPlayerController.addListener(_videoListener);
     await _videoPlayerController.initialize();
     _chewieController = ChewieController(
         videoPlayerController: _videoPlayerController, showControls: false);
@@ -85,81 +89,7 @@ class _VideoCaptureState extends State<VideoCapture>
           child: FutureBuilder(
             future: _init,
             builder: (context, snapshot) {
-              return Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      color: Colors.white,
-                      onPressed: (_videoPlayerController.value.duration == null)
-                          ? null
-                          : () {
-                              setState(() {
-                                if (_videoPlayerController.value.isPlaying) {
-                                  _videoPlayerController.pause();
-                                } else {
-                                  if (_videoPlayerController.value.position ==
-                                      _videoPlayerController.value.duration) {
-                                    _videoPlayerController
-                                        .seekTo(Duration(milliseconds: 0));
-                                  }
-                                  _videoPlayerController.play();
-                                }
-                              });
-                            },
-                      icon: Icon(
-                        _videoPlayerController.value.isPlaying
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                      ),
-                      tooltip: _videoPlayerController.value.isPlaying
-                          ? 'Pause'
-                          : 'Play',
-                    ),
-                    IconButton(
-                      onPressed: (_videoPlayerController.value.duration == null)
-                          ? null
-                          : () {
-                              setState(() {
-                                if (_videoPlayerController.value.volume == 0) {
-                                  _videoPlayerController.setVolume(100);
-                                } else {
-                                  _videoPlayerController.setVolume(0);
-                                }
-                              });
-                            },
-                      icon: Icon(
-                        _videoPlayerController.value.volume == 0
-                            ? Icons.volume_off
-                            : Icons.volume_up,
-                      ),
-                      color: Colors.white,
-                      tooltip: "Mute",
-                    ),
-                    Flexible(
-                      fit: FlexFit.tight,
-                      child: Container(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                        height: 48,
-                        child: MaterialVideoProgressBar(
-                          _videoPlayerController,
-                          colors: ChewieProgressColors(
-                              playedColor: Colors.white,
-                              handleColor: Colors.white,
-                              bufferedColor: Colors.grey,
-                              backgroundColor: Colors.black),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      child: Text(
-                        "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              return VideoControl(_videoPlayerController);
             },
           ),
         ));

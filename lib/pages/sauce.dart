@@ -12,7 +12,7 @@ import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom hide Text;
 import 'package:need_for_sauce/common/video_control.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
-import 'package:chewie/chewie.dart' hide ChewieProgressColors;
+import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 
 class SauceDesc extends StatefulWidget {
@@ -35,14 +35,8 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   ValueNotifier<Widget> media = ValueNotifier(Container());
   PageController _pageController = PageController(initialPage: 0);
 
-  void _videoListener() async {
-    if (_videoPlayerController.value.position ==
-        _videoPlayerController.value.duration) {
-      print("completed");
-    }
-    if (_videoPlayerController.value.hasError) {
-      media.value = _imageShow();
-    }
+  void _videoListener() {
+    setState(() {});
   }
 
   Future<void> _initVideo() async {
@@ -53,12 +47,12 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
       return;
     }
     _videoPlayerController.setVolume(0);
-    _videoPlayerController.addListener(_videoListener);
-    _videoPlayerController.setLooping(true);
     try {
       await _videoPlayerController.initialize();
       _chewieController = ChewieController(
-          videoPlayerController: _videoPlayerController, showControls: false);
+          videoPlayerController: _videoPlayerController,
+          showControls: true,
+          looping: true);
     } on Exception catch (e) {
       print(e);
     }
@@ -67,77 +61,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   Widget _videoBar() {
     return Container(
       color: Colors.blue,
-      padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
-      child: Row(
-        children: [
-          IconButton(
-            color: Colors.white,
-            onPressed: (_videoPlayerController.value.duration == null)
-                ? null
-                : () {
-                    setState(() {
-                      if (_videoPlayerController.value.isPlaying) {
-                        _videoPlayerController.pause();
-                      } else {
-                        if (_videoPlayerController.value.position ==
-                            _videoPlayerController.value.duration) {
-                          _videoPlayerController
-                              .seekTo(Duration(milliseconds: 0));
-                        }
-                        _videoPlayerController.play();
-                      }
-                    });
-                  },
-            icon: Icon(
-              _videoPlayerController.value.isPlaying
-                  ? Icons.pause
-                  : Icons.play_arrow,
-            ),
-            tooltip: _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
-          ),
-          IconButton(
-            onPressed: (_videoPlayerController.value.duration == null)
-                ? null
-                : () {
-                    setState(() {
-                      if (_videoPlayerController.value.volume == 0) {
-                        _videoPlayerController.setVolume(100);
-                      } else {
-                        _videoPlayerController.setVolume(0);
-                      }
-                    });
-                  },
-            icon: Icon(
-              _videoPlayerController.value.volume == 0
-                  ? Icons.volume_off
-                  : Icons.volume_up,
-            ),
-            color: Colors.white,
-            tooltip: "Mute",
-          ),
-          Flexible(
-            fit: FlexFit.tight,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-              height: 48,
-              child: MaterialVideoProgressBar(
-                _videoPlayerController,
-                colors: ChewieProgressColors(
-                    playedColor: Colors.white,
-                    handleColor: Colors.white,
-                    bufferedColor: Colors.grey,
-                    backgroundColor: Colors.black),
-              ),
-            ),
-          ),
-          Container(
-            child: Text(
-              "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
-              style: TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
+      child: VideoControl(_videoPlayerController),
     );
   }
 
@@ -157,7 +81,6 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                       ),
                       aspectRatio: _videoPlayerController.value.aspectRatio,
                     ),
-                    _videoBar()
                   ],
                 )
               : Center(

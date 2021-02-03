@@ -5,10 +5,10 @@ import 'package:need_for_sauce/models/models.dart';
 import 'dart:convert';
 import 'package:need_for_sauce/common/common.dart';
 
-const api_key1 = String.fromEnvironment('api_key1');
-const api_key2 = String.fromEnvironment('api_key2');
+const sn_api_key1 = String.fromEnvironment('sn_api_key1');
+const sn_api_key2 = String.fromEnvironment('sn_api_key2');
 
-List<String> apis = [api_key1, api_key2];
+const List<String> sn_apis = [sn_api_key1, sn_api_key2];
 
 // Based on https://saucenao.com/tools/examples/api/identify_images_v1.1.py
 // Commented index, site closed or index API broken/not updated/disabled
@@ -129,7 +129,7 @@ class SharedPreferencesUtils {
     if (api == null) {
       final _random = new Random();
 
-      api = apis[_random.nextInt(apis.length)];
+      api = sn_apis[_random.nextInt(sn_apis.length)];
     }
 
     return api;

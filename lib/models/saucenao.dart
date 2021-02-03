@@ -129,6 +129,7 @@ class SauceNaoResult {
         header: SauceNaoResultHeader.fromJson(json["header"]),
         data: jsonToSauceNaoData(json["header"], json["data"]),
       );
+
   SauceNaoResultDataAbstract toSauceNaoData() {
     switch (this.header.indexId) {
       case 5:
@@ -280,7 +281,7 @@ class SauceNaoResult {
 abstract class SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
-  int daId;
+  String daId;
   String authorName;
   String authorUrl;
   int pixivId;
@@ -360,7 +361,9 @@ class SauceNaoResultData extends SauceNaoResultDataAbstract {
   Map<String, dynamic> toJsonHtml() => {
         "": title != null
             ? "<h4>$title</h4>"
-            : source != null ? "<h4>$source</h4>" : null,
+            : source != null
+                ? "<h4>$source</h4>"
+                : null,
         "<b>Link</b>": extUrls == null
             ? null
             : "<a href=${Uri.parse(extUrls[0]).host}>${extUrls[0]}</a>"

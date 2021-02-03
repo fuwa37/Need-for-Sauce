@@ -52,26 +52,22 @@ class SauceObject {
     });
 
     similarity = double.parse((trace.similarity * 100).toStringAsFixed(2));
-    imageUrl = 'https://trace.moe/thumbnail.php?anilist_id=' +
-        trace.anilistId.toString() +
-        '&file=' +
-        Uri.encodeQueryComponent(trace.filename).toString() +
-        '&t=' +
-        ((trace.at == trace.at.truncate())
-            ? trace.at.toInt().toString()
-            : trace.at.toString()) +
-        '&token=' +
-        trace.tokenthumb;
-    videoUrl = 'https://trace.moe/preview.php?anilist_id=' +
-        trace.anilistId.toString() +
-        '&file=' +
-        Uri.encodeQueryComponent(trace.filename).toString() +
-        '&t=' +
-        ((trace.at == trace.at.truncate())
-            ? trace.at.toInt().toString()
-            : trace.at.toString()) +
-        '&token=' +
-        trace.tokenthumb;
+    imageUrl =
+        'https://media.trace.moe/image/${trace.anilistId.toString()}/${Uri.encodeComponent(trace.filename).toString()}' +
+            '?t=' +
+            ((trace.at == trace.at.truncate())
+                ? trace.at.toInt().toString()
+                : trace.at.toString()) +
+            '&token=' +
+            trace.tokenthumb;
+    videoUrl =
+        'https://media.trace.moe/video/${trace.anilistId.toString()}/${Uri.encodeComponent(trace.filename).toString()}' +
+            '?t=' +
+            ((trace.at == trace.at.truncate())
+                ? trace.at.toInt().toString()
+                : trace.at.toString()) +
+            '&token=' +
+            trace.tokenthumb;
 
     title = trace.titleRomaji;
     reply = output;
