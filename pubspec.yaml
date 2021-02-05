@@ -23,35 +23,39 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  carousel_slider: ^2.2.1
+  chewie: ^0.12.1
+  device_info: ^1.0.0
+  dio: ^3.0.8
+  expandable: ^4.1.4
+  extended_image: ^1.5.0
+  file_picker: ^2.1.0
+  flutter_cache_manager: ^2.1.1
+  flutter_html: ^1.2.0
+  flutter_screenutil: ^4.0.0
+  flutter_xlider: ^3.4.0
   image: ^2.1.19
   image_editor: ^0.7.0
   isolate: ^2.0.3
+  markdown: ^3.0.0
+  mime: ^0.9.6+3
+  open_file: ^3.0.1
+  package_info: ^0.4.0+18
   path_provider: ^1.6.0
-  file_picker: ^2.1.0
-  flutter_screenutil: ^4.0.0
-  extended_image: ^1.5.0
+  permission_handler: ^5.0.0
+  provider: ^4.3.1
+  receive_sharing_intent: ^1.4.3
+  rect_getter: ^0.1.0
+  share: ^0.6.3+6
+  shared_preferences: ^0.5.6+1
+  sliding_up_panel: ^1.0.0
   url_launcher: ^5.4.1
-  device_info: ^1.0.0
+  video_player: ^1.0.1
+  video_thumbnail: ^0.2.5+1
+
+dependency_overrides:
   video_thumbnail:
     path: plugins/video_thumbnail-0.2.5+1-edit
-  shared_preferences: ^0.5.6+1
-  dio: ^3.0.8
-  open_file: ^3.0.1
-  share: ^0.6.3+6
-  permission_handler: ^5.0.0
-  package_info: ^0.4.0+18
-  receive_sharing_intent: ^1.4.3
-  sliding_up_panel: ^1.0.0
-  mime: ^0.9.6+3
-  flutter_html: ^1.2.0
-  provider: ^4.3.1
-  expandable: ^4.1.4
-  chewie: ^0.12.1
-  rect_getter: ^0.1.0
-  markdown: ^3.0.0
-  carousel_slider: ^2.2.1
-  flutter_xlider: ^3.4.0
-  video_player: ^1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -67,7 +71,6 @@ flutter_icons:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
 # The following section is specific to Flutter.
 flutter:
 
@@ -84,13 +87,10 @@ flutter:
     - "assets/icon/app_icon.png"
     - "assets/icon/app_icon_circle.png"
     - "assets/texts/"
-
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
-
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/assets-and-images/#from-packages
-
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a

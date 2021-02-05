@@ -95,7 +95,6 @@ class TraceDocs {
       this.isAdult});
 
   TraceDocs.fromJson(Map<String, dynamic> json) {
-    print(json['at']);
     from = json['from'].toDouble();
     to = json['to'].toDouble();
     anilistId = json['anilist_id'];

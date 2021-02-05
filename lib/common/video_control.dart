@@ -1,8 +1,213 @@
-// From Chewie package
+// Adapted rom Chewie package
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
+
+class VideoControls extends StatefulWidget {
+  const VideoControls(this.videoController,
+      {this.allowFullScreen, this.showTime, Key key})
+      : super(key: key);
+
+  final VideoPlayerController videoController;
+  final bool allowFullScreen;
+  final bool showTime;
+
+  @override
+  State<StatefulWidget> createState() {
+    return _VideoControlsState();
+  }
+}
+
+class _VideoControlsState extends State<VideoControls>
+    with SingleTickerProviderStateMixin {
+  VideoPlayerValue _latestValue;
+  double _latestVolume;
+
+  final barHeight = 48.0;
+  final marginSize = 5.0;
+
+  VideoPlayerController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_latestValue.hasError) {
+      return const Center(
+        child: Icon(
+          Icons.error,
+          color: Colors.white,
+          size: 42,
+        ),
+      );
+    }
+
+    return _buildBottomBar(context);
+  }
+
+  @override
+  void dispose() {
+    _dispose();
+    super.dispose();
+  }
+
+  void _dispose() {
+    controller.removeListener(_updateState);
+  }
+
+  @override
+  void didChangeDependencies() {
+    final _oldController = controller;
+    controller = widget.videoController;
+
+    if (_oldController != controller) {
+      _dispose();
+      _initialize();
+    }
+
+    super.didChangeDependencies();
+  }
+
+  Container _buildBottomBar(
+    BuildContext context,
+  ) {
+    final iconColor = Theme.of(context).textTheme.button.color;
+
+    return Container(
+      height: barHeight,
+      color: Theme.of(context).dialogBackgroundColor,
+      child: Row(
+        children: <Widget>[
+          _buildPlayPause(controller),
+          if (widget.showTime ?? true) _buildPosition(iconColor),
+          _buildProgressBar(),
+          _buildMuteButton(controller),
+        ],
+      ),
+    );
+  }
+
+  GestureDetector _buildMuteButton(
+    VideoPlayerController controller,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        if (_latestValue.volume == 0) {
+          controller.setVolume(_latestVolume ?? 0.5);
+        } else {
+          _latestVolume = controller.value.volume;
+          controller.setVolume(0.0);
+        }
+      },
+      child: ClipRect(
+        child: Container(
+          height: barHeight,
+          padding: const EdgeInsets.only(
+            left: 8.0,
+            right: 8.0,
+          ),
+          child: Icon(
+            (_latestValue != null && _latestValue.volume > 0)
+                ? Icons.volume_up
+                : Icons.volume_off,
+          ),
+        ),
+      ),
+    );
+  }
+
+  GestureDetector _buildPlayPause(VideoPlayerController controller) {
+    return GestureDetector(
+      onTap: _playPause,
+      child: Container(
+        height: barHeight,
+        color: Colors.transparent,
+        margin: const EdgeInsets.only(left: 8.0, right: 4.0),
+        padding: const EdgeInsets.only(
+          left: 12.0,
+          right: 12.0,
+        ),
+        child: Icon(
+          controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPosition(Color iconColor) {
+    final position = _latestValue != null && _latestValue.position != null
+        ? _latestValue.position
+        : Duration.zero;
+    final duration = _latestValue != null && _latestValue.duration != null
+        ? _latestValue.duration
+        : Duration.zero;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 24.0),
+      child: Text(
+        '${formatDuration(position)} / ${formatDuration(duration)}',
+        style: const TextStyle(
+          fontSize: 14.0,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _initialize() async {
+    controller.addListener(_updateState);
+
+    _updateState();
+  }
+
+  void _playPause() {
+    bool isFinished;
+    if (_latestValue.duration != null) {
+      isFinished = _latestValue.position >= _latestValue.duration;
+    } else {
+      isFinished = false;
+    }
+
+    setState(() {
+      if (controller.value.isPlaying) {
+        controller.pause();
+      } else {
+        if (!controller.value.initialized) {
+          controller.initialize().then((_) {
+            controller.play();
+          });
+        } else {
+          if (isFinished) {
+            controller.seekTo(const Duration());
+          }
+          controller.play();
+        }
+      }
+    });
+  }
+
+  void _updateState() {
+    setState(() {
+      _latestValue = controller.value;
+    });
+  }
+
+  Widget _buildProgressBar() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(right: 20.0),
+        child: MaterialVideoProgressBar(
+          controller,
+          colors: ChewieProgressColors(
+              playedColor: Theme.of(context).accentColor,
+              handleColor: Theme.of(context).accentColor,
+              bufferedColor: Theme.of(context).backgroundColor,
+              backgroundColor: Theme.of(context).disabledColor),
+        ),
+      ),
+    );
+  }
+}
 
 class MaterialVideoProgressBar extends StatefulWidget {
   MaterialVideoProgressBar(
@@ -11,7 +216,9 @@ class MaterialVideoProgressBar extends StatefulWidget {
     this.onDragEnd,
     this.onDragStart,
     this.onDragUpdate,
-  }) : colors = colors ?? ChewieProgressColors();
+    Key key,
+  })  : colors = colors ?? ChewieProgressColors(),
+        super(key: key);
 
   final VideoPlayerController controller;
   final ChewieProgressColors colors;
@@ -62,7 +269,6 @@ class _VideoProgressBarState extends State<MaterialVideoProgressBar> {
 
     return GestureDetector(
       onHorizontalDragStart: (DragStartDetails details) {
-        print(details);
         if (!controller.value.initialized) {
           return;
         }
@@ -194,7 +400,7 @@ String formatDuration(Duration position) {
   int seconds = ms ~/ 1000;
   final int hours = seconds ~/ 3600;
   seconds = seconds % 3600;
-  var minutes = seconds ~/ 60;
+  final minutes = seconds ~/ 60;
   seconds = seconds % 60;
 
   final hoursString = hours >= 10
@@ -216,98 +422,7 @@ String formatDuration(Duration position) {
           : '0$seconds';
 
   final formattedTime =
-      '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';
+      '${hoursString == '00' ? '' : '$hoursString:'}$minutesString:$secondsString';
 
   return formattedTime;
-}
-
-class VideoControl extends StatefulWidget {
-  VideoControl(this.videoPlayerController);
-
-  final VideoPlayerController videoPlayerController;
-
-  @override
-  _VideoControlState createState() => _VideoControlState();
-}
-
-class _VideoControlState extends State<VideoControl> {
-  VideoPlayerController get _videoPlayerController =>
-      widget.videoPlayerController;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
-      child: Row(
-        children: [
-          IconButton(
-            color: Colors.white,
-            onPressed: (_videoPlayerController.value.duration == null)
-                ? null
-                : () {
-                    setState(() {
-                      if (_videoPlayerController.value.isPlaying) {
-                        _videoPlayerController.pause();
-                      } else {
-                        if (_videoPlayerController.value.position ==
-                            _videoPlayerController.value.duration) {
-                          _videoPlayerController
-                              .seekTo(Duration(milliseconds: 0));
-                        }
-                        _videoPlayerController.play();
-                      }
-                    });
-                  },
-            icon: Icon(
-              _videoPlayerController.value.isPlaying
-                  ? Icons.pause
-                  : Icons.play_arrow,
-            ),
-            tooltip: _videoPlayerController.value.isPlaying ? 'Pause' : 'Play',
-          ),
-          IconButton(
-            onPressed: (_videoPlayerController.value.duration == null)
-                ? null
-                : () {
-                    setState(() {
-                      if (_videoPlayerController.value.volume == 0) {
-                        _videoPlayerController.setVolume(100);
-                      } else {
-                        _videoPlayerController.setVolume(0);
-                      }
-                    });
-                  },
-            icon: Icon(
-              _videoPlayerController.value.volume == 0
-                  ? Icons.volume_off
-                  : Icons.volume_up,
-            ),
-            color: Colors.white,
-            tooltip: "Mute",
-          ),
-          Flexible(
-            fit: FlexFit.tight,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-              height: 48,
-              child: MaterialVideoProgressBar(
-                _videoPlayerController,
-                colors: ChewieProgressColors(
-                    playedColor: Colors.white,
-                    handleColor: Colors.white,
-                    bufferedColor: Colors.grey,
-                    backgroundColor: Colors.black),
-              ),
-            ),
-          ),
-          Container(
-            child: Text(
-              "${formatDuration(_videoPlayerController?.value?.position ?? Duration(seconds: 0))}/${formatDuration(_videoPlayerController?.value?.duration ?? Duration(seconds: 0))}",
-              style: TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

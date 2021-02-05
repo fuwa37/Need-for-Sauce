@@ -1,13 +1,14 @@
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'dart:io';
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'dart:typed_data';
+
 import 'package:chewie/chewie.dart';
-import 'package:provider/provider.dart';
-import 'package:need_for_sauce/common/notifier.dart' show LoadingNotifier;
+import 'package:flutter/material.dart';
 import 'package:need_for_sauce/common/common.dart' show loadingDialog;
+import 'package:need_for_sauce/common/notifier.dart' show LoadingNotifier;
 import 'package:need_for_sauce/common/video_control.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class VideoCapture extends StatefulWidget {
   final _video;
@@ -28,57 +29,26 @@ class _VideoCaptureState extends State<VideoCapture>
   double value = 0;
   Future<void> _init;
 
-  void _videoListener() {
-    setState(() {});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: Colors.white.withOpacity(0.5),
+        bottomNavigationBar: _bab(),
+        body: _body());
   }
 
-  Future<Uint8List> _thumbnail() async {
-    Uint8List thumb;
-
-    try {
-      thumb = await VideoThumbnail.thumbnailData(
-        video: widget._video.path,
-        imageFormat: ImageFormat.JPEG,
-        timeMs: _videoPlayerController.value.position.inMilliseconds,
-        quality: 100,
-      );
-    } on NoSuchMethodError catch (e) {
-      print(e);
-      thumb = await VideoThumbnail.thumbnailData(
-        video: widget._video,
-        imageFormat: ImageFormat.JPEG,
-        timeMs: _videoPlayerController.value.position.inMilliseconds,
-        quality: 100,
-      );
-    }
-
-    return thumb;
+  @override
+  void dispose() {
+    _videoPlayerController.dispose();
+    _chewieController.dispose();
+    super.dispose();
   }
 
-  _getThumbnail() async {
-    loadingDialog(scaffoldContext: _scaffoldKey.currentContext);
-
-    _thumbnail().then((value) {
-      if (value == null) return;
-
-      context.read<LoadingNotifier>().popDialog();
-      Navigator.pop(context, value);
-    }).catchError((onError) {
-      print(onError);
-    });
-  }
-
-  Future<void> _initVideo() async {
-    if (widget._video is File) {
-      _videoPlayerController = VideoPlayerController.file(widget._video);
-    } else if (widget._video is String) {
-      _videoPlayerController = VideoPlayerController.network(widget._video);
-    }
-    _videoPlayerController.setVolume(0);
-    _videoPlayerController.addListener(_videoListener);
-    await _videoPlayerController.initialize();
-    _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController, showControls: false);
+  @override
+  void initState() {
+    super.initState();
+    _init = _initVideo();
   }
 
   Widget _bab() {
@@ -89,7 +59,7 @@ class _VideoCaptureState extends State<VideoCapture>
           child: FutureBuilder(
             future: _init,
             builder: (context, snapshot) {
-              return VideoControl(_videoPlayerController);
+              return VideoControls(_videoPlayerController);
             },
           ),
         ));
@@ -163,25 +133,53 @@ class _VideoCaptureState extends State<VideoCapture>
         });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _init = _initVideo();
+  _getThumbnail() async {
+    loadingDialog(scaffoldContext: _scaffoldKey.currentContext);
+
+    _thumbnail().then((value) {
+      if (value == null) return;
+
+      context.read<LoadingNotifier>().popDialog();
+      Navigator.pop(context, value);
+    }).catchError((onError) {
+      print(onError);
+    });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: Colors.white.withOpacity(0.5),
-        bottomNavigationBar: _bab(),
-        body: _body());
+  Future<void> _initVideo() async {
+    if (widget._video is File) {
+      _videoPlayerController = VideoPlayerController.file(widget._video);
+    } else if (widget._video is String) {
+      _videoPlayerController = VideoPlayerController.network(widget._video);
+    }
+    _videoPlayerController.setVolume(0);
+    await _videoPlayerController.initialize();
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
+      showControls: false,
+    );
   }
 
-  @override
-  void dispose() {
-    _videoPlayerController.dispose();
-    _chewieController.dispose();
-    super.dispose();
+  Future<Uint8List> _thumbnail() async {
+    Uint8List thumb;
+
+    try {
+      thumb = await VideoThumbnail.thumbnailData(
+        video: widget._video.path,
+        imageFormat: ImageFormat.JPEG,
+        timeMs: _videoPlayerController.value.position.inMilliseconds,
+        quality: 100,
+      );
+    } on NoSuchMethodError catch (e) {
+      print(e);
+      thumb = await VideoThumbnail.thumbnailData(
+        video: widget._video,
+        imageFormat: ImageFormat.JPEG,
+        timeMs: _videoPlayerController.value.position.inMilliseconds,
+        quality: 100,
+      );
+    }
+
+    return thumb;
   }
 }

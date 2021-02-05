@@ -1,18 +1,21 @@
+import 'dart:io';
+
+import 'package:chewie/chewie.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:need_for_sauce/models/models.dart';
-import 'package:share/share.dart';
-import 'package:need_for_sauce/common/common.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
-import 'package:html/parser.dart' as parser;
-import 'package:html/dom.dart' as dom hide Text;
-import 'package:need_for_sauce/common/video_control.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
-import 'package:chewie/chewie.dart';
+import 'package:html/dom.dart' as dom hide Text;
+import 'package:html/parser.dart' as parser;
+import 'package:need_for_sauce/common/caching_helper.dart';
+import 'package:need_for_sauce/common/common.dart';
+import 'package:need_for_sauce/common/video_control.dart';
+import 'package:need_for_sauce/models/models.dart';
+import 'package:share/share.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 class SauceDesc extends StatefulWidget {
@@ -35,58 +38,153 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   ValueNotifier<Widget> media = ValueNotifier(Container());
   PageController _pageController = PageController(initialPage: 0);
 
-  void _videoListener() {
-    setState(() {});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget?.sauce?.title ?? '',
+            softWrap: true,
+          ),
+          actions: [
+            IconButton(
+              tooltip: "Share",
+              onPressed: () {
+                Share.share(_removeAllHtmlTags(widget.sauce.reply));
+              },
+              icon: Icon(Icons.share),
+            )
+          ],
+        ),
+        body: SingleChildScrollView(child: sauceResult()));
   }
 
-  Future<void> _initVideo() async {
-    if (widget.sauce?.videoUrl != null ?? false) {
-      _videoPlayerController =
-          VideoPlayerController.network(widget.sauce.videoUrl);
-    } else {
-      return;
-    }
-    _videoPlayerController.setVolume(0);
-    try {
-      await _videoPlayerController.initialize();
-      _chewieController = ChewieController(
-          videoPlayerController: _videoPlayerController,
-          showControls: true,
-          looping: true);
-    } on Exception catch (e) {
-      print(e);
-    }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.sauce.mangadexChapter != null)
+      widget.sauce.mangadexChapter.forEach((element) {
+        precacheImage(ExtendedNetworkImageProvider(element), context);
+      });
   }
 
-  Widget _videoBar() {
-    return Container(
-      color: Colors.blue,
-      child: VideoControl(_videoPlayerController),
+  @override
+  void dispose() {
+    _videoPlayerController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _init = _initVideo();
+    media.value = _videoPlayer();
+    if (widget.sauce.mangadexChapter != null)
+      widget.sauce.mangadexChapter.insert(0, widget.sauce.imageUrl);
+    _pageController.addListener(_pageListener);
+  }
+
+  Widget sauceResult() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        (widget.sauce.videoUrl == null)
+            ? (widget.sauce.imageUrl == null)
+                ? Container()
+                : _imageShow()
+            : ValueListenableBuilder(
+                valueListenable: media,
+                builder: (context, Widget value, child) {
+                  return value;
+                },
+              ),
+        Padding(
+            padding: EdgeInsets.all(8),
+            child: Stack(
+              children: [
+                MediaQuery(
+                    data: MediaQueryData(textScaleFactor: 1),
+                    child: Html(
+                      shrinkWrap: true,
+                      data: (widget?.sauce?.sauceStatus ?? true)
+                          ? """
+                      <code><a href='help'>Got wrong result?</a>
+                      </br>Similarity: ${widget.sauce.similarity}%</code>
+                      </br>${widget.sauce.reply}
+                      """
+                          : widget.sauce.reply,
+                      onLinkTap: (url) {
+                        print(url);
+                        canLaunch(url).then((value) {
+                          if (value) {
+                            launch(url);
+                          } else {
+                            if (url == 'help') {
+                              properImageHelp(context, _helpController);
+                            }
+                          }
+                        });
+                      },
+                      style: {
+                        'p': Style(
+                            fontSize: FontSize(
+                                15 * MediaQuery.of(context).textScaleFactor)),
+                        'code': Style(
+                            fontSize: FontSize(
+                                12 * MediaQuery.of(context).textScaleFactor)),
+                        'pre': Style(
+                            fontFamily: Theme.of(context)
+                                .textTheme
+                                .bodyText1
+                                .fontFamily,
+                            fontSize: FontSize(
+                                15 * MediaQuery.of(context).textScaleFactor))
+                      },
+                      customRender: {
+                        "spoiler": (context, child, attributes, element) {
+                          return child;
+                        },
+                        "li": (context, child, attributes, element) {
+                          return child;
+                        }
+                      },
+                    )),
+                Positioned(
+                  right: 0,
+                  top: -8,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width / 2,
+                    child: MediaQuery(
+                        data: MediaQueryData(textScaleFactor: 1),
+                        child: Html(
+                          shrinkWrap: true,
+                          data: (widget?.sauce?.source != null)
+                              ? widget.sauce.source
+                              : '',
+                          onLinkTap: (url) {
+                            canLaunch(url).then((value) {
+                              if (value) {
+                                launch(url);
+                              }
+                            });
+                          },
+                          style: {
+                            'p': Style(
+                                fontSize: FontSize(12 *
+                                    MediaQuery.of(context).textScaleFactor),
+                                textAlign: TextAlign.right),
+                          },
+                        )),
+                  ),
+                ),
+              ],
+            )),
+      ],
     );
   }
 
-  Widget _videoPlayer() {
-    return FutureBuilder(
-        future: _init.timeout(Duration(seconds: 15)),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return _imageShow();
-          }
-          return (_videoPlayerController.value.initialized)
-              ? Column(
-                  children: [
-                    AspectRatio(
-                      child: Chewie(
-                        controller: _chewieController,
-                      ),
-                      aspectRatio: _videoPlayerController.value.aspectRatio,
-                    ),
-                  ],
-                )
-              : Center(
-                  child: CircularProgressIndicator(),
-                );
-        });
+  Future<File> _cachingVideo(String url) async {
+    return await CacheUtils.downloadAndCache(url);
   }
 
   Widget _imageShow() {
@@ -219,108 +317,35 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
     }
   }
 
-  _pageListener() {}
+  Future<void> _initVideo() async {
+    if (widget.sauce?.videoUrl != null ?? false) {
+      _videoPlayerController = VideoPlayerController.file(
+          await _cachingVideo(widget.sauce.videoUrl));
 
-  Widget sauceResult() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        (widget.sauce.videoUrl == null)
-            ? (widget.sauce.imageUrl == null)
-                ? Container()
-                : _imageShow()
-            : ValueListenableBuilder(
-                valueListenable: media,
-                builder: (context, Widget value, child) {
-                  return value;
-                },
-              ),
-        Padding(
-            padding: EdgeInsets.all(8),
-            child: Stack(
-              children: [
-                MediaQuery(
-                    data: MediaQueryData(textScaleFactor: 1),
-                    child: Html(
-                      shrinkWrap: true,
-                      data: (widget?.sauce?.sauceStatus ?? true)
-                          ? """
-                      <code><a href='help'>Got wrong result?</a>
-                      </br>Similarity: ${widget.sauce.similarity}%</code>
-                      </br>${widget.sauce.reply}
-                      """
-                          : widget.sauce.reply,
-                      onLinkTap: (url) {
-                        print(url);
-                        canLaunch(url).then((value) {
-                          if (value) {
-                            launch(url);
-                          } else {
-                            if (url == 'help') {
-                              properImageHelp(context, _helpController);
-                            }
-                          }
-                        });
-                      },
-                      style: {
-                        'p': Style(
-                            fontSize: FontSize(
-                                15 * MediaQuery.of(context).textScaleFactor)),
-                        'code': Style(
-                            fontSize: FontSize(
-                                12 * MediaQuery.of(context).textScaleFactor)),
-                        'pre': Style(
-                            fontFamily: Theme.of(context)
-                                .textTheme
-                                .bodyText1
-                                .fontFamily,
-                            fontSize: FontSize(
-                                15 * MediaQuery.of(context).textScaleFactor))
-                      },
-                      customRender: {
-                        "spoiler": (context, child, attributes, element) {
-                          return child;
-                        },
-                        "li": (context, child, attributes, element) {
-                          return child;
-                        }
-                      },
-                    )),
-                Positioned(
-                  right: 0,
-                  top: -8,
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width / 2,
-                    child: MediaQuery(
-                        data: MediaQueryData(textScaleFactor: 1),
-                        child: Html(
-                          shrinkWrap: true,
-                          data: (widget?.sauce?.source != null)
-                              ? widget.sauce.source
-                              : '',
-                          onLinkTap: (url) {
-                            canLaunch(url).then((value) {
-                              if (value) {
-                                launch(url);
-                              }
-                            });
-                          },
-                          style: {
-                            'p': Style(
-                                fontSize: FontSize(12 *
-                                    MediaQuery.of(context).textScaleFactor),
-                                textAlign: TextAlign.right),
-                          },
-                        )),
-                  ),
-                ),
-              ],
-            )),
-      ],
-    );
+      if (_videoPlayerController == null)
+        _videoPlayerController =
+            VideoPlayerController.network(widget.sauce.videoUrl);
+    } else {
+      return;
+    }
+    _videoPlayerController.setVolume(0);
+    _videoPlayerController.addListener(_videoListener);
+    try {
+      await _videoPlayerController.initialize();
+      _chewieController = ChewieController(
+        videoPlayerController: _videoPlayerController,
+        showControls: false,
+        allowPlaybackSpeedChanging: false,
+        allowFullScreen: false,
+      );
+    } on Exception catch (e) {
+      print(e);
+    }
   }
 
-  String removeAllHtmlTags(String htmlString) {
+  _pageListener() {}
+
+  String _removeAllHtmlTags(String htmlString) {
     List<String> cleanStrings = new List<String>();
     String replaced =
         htmlString.replaceAll('</br>', '</p><p>').replaceAll('<h3>', '<p>');
@@ -352,49 +377,46 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
     return cleanStrings.join('\n');
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _init = _initVideo();
-    media.value = _videoPlayer();
-    if (widget.sauce.mangadexChapter != null)
-      widget.sauce.mangadexChapter.insert(0, widget.sauce.imageUrl);
-    _pageController.addListener(_pageListener);
+  Widget _videoBar() {
+    return Container(
+        color: Colors.blue,
+        child: VideoControls(
+          _videoPlayerController,
+          showTime: false,
+        ));
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (widget.sauce.mangadexChapter != null)
-      widget.sauce.mangadexChapter.forEach((element) {
-        precacheImage(ExtendedNetworkImageProvider(element), context);
-      });
+  void _videoListener() {
+    if (_videoPlayerController.value.hasError) {
+      media.value = _imageShow();
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget?.sauce?.title ?? '',
-            softWrap: true,
-          ),
-          actions: [
-            IconButton(
-              tooltip: "Share",
-              onPressed: () {
-                Share.share(removeAllHtmlTags(widget.sauce.reply));
-              },
-              icon: Icon(Icons.share),
-            )
-          ],
-        ),
-        body: SingleChildScrollView(child: sauceResult()));
-  }
-
-  @override
-  void dispose() {
-    _videoPlayerController?.dispose();
-    super.dispose();
+  Widget _videoPlayer() {
+    return FutureBuilder(
+        future: _init.timeout(Duration(seconds: 30)),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            print(snapshot.error);
+            return _imageShow();
+          }
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              !_videoPlayerController.value.initialized) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          return Column(
+            children: [
+              AspectRatio(
+                child: Chewie(
+                  controller: _chewieController,
+                ),
+                aspectRatio: _videoPlayerController.value.aspectRatio,
+              ),
+              _videoBar(),
+            ],
+          );
+        });
   }
 }
