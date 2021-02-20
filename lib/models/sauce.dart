@@ -92,23 +92,13 @@ class SauceObject {
         if (key.isEmpty) {
           output += "$value";
         } else {
-          try {
-            if (value?.isNotEmpty ?? false) output += "<p>$key : $value</p>";
-          } on Exception catch (e) {
-            print(e);
-            output += "<p>$key : $value</p>";
-          }
+          output += "<p>$key : $value</p>";
         }
       }
     });
     similarity = double.parse(header.similarity);
     imageUrl = header.thumbnail;
-    title = data.title != null
-        ? data.title
-        : (data.source.isEmpty ||
-                (Uri.tryParse(data.source)?.isAbsolute ?? false))
-            ? ''
-            : data.source + "${(data.part == null) ? '' : (' - ' + data.part)}";
+    title = snTitle(data);
     reply = output;
   }
 

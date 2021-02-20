@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info/package_info.dart';
 import 'package:need_for_sauce/common/shared_preferences_helper.dart';
 import 'package:need_for_sauce/common/common.dart';
 
@@ -133,6 +134,26 @@ class GifNotifier extends ChangeNotifier {
   void setRepeated(bool val) {
     if (isRepeated == val) return;
     isRepeated = val;
+    notifyListeners();
+  }
+}
+
+class AppInfo extends ChangeNotifier {
+  String appName;
+  String packageName;
+  String version;
+
+  AppInfo() {
+    _init();
+  }
+
+  void _init() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    this.appName = packageInfo.appName;
+    this.packageName = packageInfo.packageName;
+    this.version = packageInfo.version;
+
     notifyListeners();
   }
 }

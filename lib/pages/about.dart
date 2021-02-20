@@ -536,7 +536,7 @@ class _AboutPageState extends State<AboutPage> {
                   applicationIcon: Padding(
                     padding: EdgeInsets.all(16),
                     child: Image.asset(
-                      "assets/app_icon_circle.png",
+                      "assets/icon/app_icon_circle.png",
                       width: 150,
                       height: 150,
                     ),

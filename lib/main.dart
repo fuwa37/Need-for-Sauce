@@ -27,6 +27,7 @@ import 'package:need_for_sauce/pages/editors/video_capture.dart';
 import 'package:need_for_sauce/pages/sauce.dart';
 import 'package:need_for_sauce/widgets/main/bab_row.dart';
 import 'package:need_for_sauce/widgets/main/banner.dart';
+import 'package:need_for_sauce/widgets/main/custom_alert_dialog.dart';
 import 'package:need_for_sauce/widgets/main/image_viewer.dart';
 import 'package:need_for_sauce/widgets/main/main_button.dart';
 import 'package:path/path.dart' as path;
@@ -36,6 +37,7 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:rect_getter/rect_getter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:union/union.dart';
 
 void main() {
   runApp(MultiProvider(providers: [
@@ -59,6 +61,23 @@ class MyApp extends StatelessWidget {
     return ScreenUtilInit(
       child: MaterialApp(
         title: "Need for Sauce",
+        theme: ThemeData(
+            brightness: Brightness.light,
+            textTheme: TextTheme(
+                headline5: TextStyle(color: Colors.white, fontSize: 18),
+                headline6: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+            primaryIconTheme: IconThemeData(color: Colors.white),
+            iconTheme: IconThemeData(color: Colors.black),
+            floatingActionButtonTheme: FloatingActionButtonThemeData(),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                    onPrimary: Colors.white, primary: Colors.blue))),
+        darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                    onPrimary: Colors.blue, primary: Colors.red))),
         home: MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (context) => ImageNotifier()),
@@ -76,14 +95,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription _intentDataStreamSubscription;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _urlController = TextEditingController();
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController _snApiController = TextEditingController();
+  GlobalKey<FormState> _urlFormKey = GlobalKey<FormState>();
+  GlobalKey<FormState> _snApiformKey = GlobalKey<FormState>();
   PanelController _panelController = PanelController();
   ScrollController _helpController = ScrollController();
   ExpandableController _expandableController = ExpandableController();
   var _optionKey = RectGetter.createGlobalKey();
   ValueNotifier<double> _paddingOption = ValueNotifier(0);
   AnimationController _rotateAnimationController;
-  String _sauceNaoApi;
+  ValueNotifier<String> _sauceNaoApi = ValueNotifier('');
+  final String _sharedSnApi = SharedPreferencesUtils.getSharedSnApi();
 
   @override
   Widget build(BuildContext context) {
@@ -126,8 +148,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.initState();
     deleteObsoleteApk();
 
-    SharedPreferencesUtils.getApi().then((api) {
-      _sauceNaoApi = api;
+    SharedPreferencesUtils.getSnApi().then((api) {
+      _sauceNaoApi.value = api;
     });
 
     _rotateAnimationController = AnimationController(
@@ -216,7 +238,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ),
             actions: [
-              FlatButton(
+              TextButton(
                 child: Text("CLOSE"),
                 onPressed: () {
                   Navigator.pop(context);
@@ -227,30 +249,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
   }
 
-/*  Widget _sauce(image) {
-    return InkWell(
-      onLongPress: () {
-        _panelController.close();
-        _getSauce(image, useForce: true);
-      },
-      child: Container(
-        child: FloatingActionButton(
-          heroTag: null,
-          onPressed: () {
-            _panelController.close();
-            _getSauce(image, useForce: false);
-          },
-          child: Icon(Icons.search),
-        ),
-      ),
-    );
-  }*/
-
   Widget _bab(BuildContext context) {
     return BottomAppBar(
       notchMargin: 12,
       shape: CircularNotchedRectangle(),
-      color: Colors.blue,
+      color: Theme.of(context).primaryColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -274,8 +277,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Container(
               child: Center(
                 child: Text(
-                  "Options",
-                  style: TextStyle(color: Colors.white),
+                  "Settings",
+                  style: Theme.of(context).textTheme.headline5,
                 ),
               ),
               height: 48,
@@ -296,25 +299,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
-
-/*  Future<Response> _uploadImage(image, {bool useTrace, bool useForce}) async {
-    String sign = await GetSignature.appSignature;
-
-    FormData formData = FormData.fromMap({
-      "url": (image is String) ? image : null,
-      "force": (useForce) ? 1 : null,
-      "trace": (useTrace) ? 1 : null,
-      "signature": sign,
-      "file": !(image is String) ? await _uploadedType(image) : null,
-    });
-    try {
-      token = CancelToken();
-      return await Sauce.sauceBot()
-          .post("uploader", data: formData, cancelToken: token);
-    } on DioError catch (e) {
-      throw e;
-    }
-  }*/
 
   _checkURLContentType(url) async {
     Response r;
@@ -364,6 +348,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+/*  Widget _sauce(image) {
+    return InkWell(
+      onLongPress: () {
+        _panelController.close();
+        _getSauce(image, useForce: true);
+      },
+      child: Container(
+        child: FloatingActionButton(
+          heroTag: null,
+          onPressed: () {
+            _panelController.close();
+            _getSauce(image, useForce: false);
+          },
+          child: Icon(Icons.search),
+        ),
+      ),
+    );
+  }*/
+
   _editImage() async {
     ImageNotifier _imageNotifier =
         Provider.of<ImageNotifier>(context, listen: false);
@@ -378,46 +381,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-/*
-  _getSauce(image, {bool useTrace, bool useForce}) {
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => Center(
-        child: WillPopScope(
-          onWillPop: () async {
-            try {
-              token.cancel("Back Button");
-            } on Exception catch (e) {
-              print(e);
-            }
-            return true;
-          },
-          child: FutureBuilder(
-            future: _uploadImage(image, useTrace: useTrace, useForce: useForce),
-            builder: (context, AsyncSnapshot<Response> snapshot) {
-              if (snapshot.hasError &&
-                  !snapshot.error.toString().contains('CANCEL')) {
-                print(snapshot.error);
-                return AlertDialog(
-                  content: Text("Can't connect to internet"),
-                );
-              }
-              if (snapshot.hasData) {}
-              return Container(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 4,
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-*/
+/*  Future<Response> _uploadImage(image, {bool useTrace, bool useForce}) async {
+    String sign = await GetSignature.appSignature;
+
+    FormData formData = FormData.fromMap({
+      "url": (image is String) ? image : null,
+      "force": (useForce) ? 1 : null,
+      "trace": (useTrace) ? 1 : null,
+      "signature": sign,
+      "file": !(image is String) ? await _uploadedType(image) : null,
+    });
+    try {
+      token = CancelToken();
+      return await Sauce.sauceBot()
+          .post("uploader", data: formData, cancelToken: token);
+    } on DioError catch (e) {
+      throw e;
+    }
+  }*/
 
   _expandableListener() {
     if (_expandableController.expanded) {
@@ -464,6 +445,47 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return;
     }
   }
+
+/*
+  _getSauce(image, {bool useTrace, bool useForce}) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => Center(
+        child: WillPopScope(
+          onWillPop: () async {
+            try {
+              token.cancel("Back Button");
+            } on Exception catch (e) {
+              print(e);
+            }
+            return true;
+          },
+          child: FutureBuilder(
+            future: _uploadImage(image, useTrace: useTrace, useForce: useForce),
+            builder: (context, AsyncSnapshot<Response> snapshot) {
+              if (snapshot.hasError &&
+                  !snapshot.error.toString().contains('CANCEL')) {
+                print(snapshot.error);
+                return AlertDialog(
+                  content: Text("Can't connect to internet"),
+                );
+              }
+              if (snapshot.hasData) {}
+              return Container(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 4,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+*/
 
   Widget _mainBody(BuildContext context) {
     return SlidingUpPanel(
@@ -512,8 +534,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       header: Container(
           width: MediaQuery.of(context).size.width,
           height: 56,
-          color: Colors.blue,
           padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+          color: Theme.of(context).primaryColor,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -527,18 +549,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     }
                   },
                   title: Text(
-                    "Options",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Colors.white),
+                    "Settings",
+                    style: Theme.of(context).textTheme.headline6,
                   ),
                   leading: RotationTransition(
                     turns: Tween<double>(begin: 0.0, end: 0.5)
                         .animate(_rotateAnimationController),
                     child: Icon(
                       Icons.arrow_drop_up,
-                      color: Colors.white,
+                      color: Theme.of(context).primaryIconTheme.color,
                     ),
                   ),
                 ),
@@ -556,8 +575,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   },
                   icon: Icon(
                     Icons.info_outline,
-                    color: Colors.white,
                     size: 26,
+                    color: Theme.of(context).primaryIconTheme.color,
                   ),
                 ),
               ),
@@ -582,10 +601,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Flexible(
-                              child: Text(
-                                "Get Additional Information",
-                                style: Theme.of(context).textTheme.subtitle1,
-                              ),
+                              child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(
+                                    "Get Additional Information",
+                                    style:
+                                        Theme.of(context).textTheme.subtitle1,
+                                  )),
                             ),
                             Flexible(
                               child: Row(
@@ -594,8 +616,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     Flexible(
                                       child: IconButton(
                                         tooltip: "Help",
-                                        color: Colors.black45,
-                                        icon: const Icon(Icons.info),
+                                        icon: Icon(
+                                          Icons.help,
+                                          color: Theme.of(context)
+                                              .accentIconTheme
+                                              .color,
+                                        ),
                                         onPressed: () {
                                           _addInfoHelp();
                                         },
@@ -614,15 +640,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ],
                         )),
                     Container(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Flexible(
-                            child: Text(
+                            child: ListTile(
+                                title: Text(
                               "Search Engine",
                               style: Theme.of(context).textTheme.subtitle1,
-                            ),
+                            )),
                           ),
                           Flexible(
                             child:
@@ -630,8 +657,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               Flexible(
                                 child: IconButton(
                                   tooltip: "Help",
-                                  color: Colors.black45,
-                                  icon: Icon(Icons.info),
+                                  icon: Icon(
+                                    Icons.help,
+                                    color:
+                                        Theme.of(context).accentIconTheme.color,
+                                  ),
                                   onPressed: () {
                                     _searchEngineHelp();
                                   },
@@ -640,7 +670,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               DropdownButton<SearchOption>(
                                 underline: Container(
                                   height: 2,
-                                  color: Colors.blue,
+                                  color:
+                                      Theme.of(context).accentIconTheme.color,
                                 ),
                                 value: searchOptionNotifier.searchOption,
                                 onChanged: (val) {
@@ -665,6 +696,66 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ],
                       ),
                     ),
+                    (searchOptionNotifier.searchOption != SearchOption.SauceNao)
+                        ? SizedBox()
+                        : ValueListenableBuilder(
+                            valueListenable: _sauceNaoApi,
+                            builder: (context, String value, child) {
+                              return Container(
+                                padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: ListTile(
+                                        title: Text(
+                                          "SauceNAO API Key",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1,
+                                        ),
+                                        subtitle: (value?.isEmpty ?? true)
+                                            ? Text(
+                                                "You are using shared key",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .error,
+                                              )
+                                            : Text(value),
+                                      ),
+                                    ),
+                                    Flexible(
+                                      child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: IconButton(
+                                                tooltip: "API Key",
+                                                icon: Icon(
+                                                  Icons.help,
+                                                  color: Theme.of(context)
+                                                      .accentIconTheme
+                                                      .color,
+                                                ),
+                                                onPressed: () {
+                                                  _snApiHelp();
+                                                },
+                                              ),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: _snApiDialog,
+                                              child: Text(
+                                                  ((value?.isEmpty ?? true)
+                                                      ? "Set API Key"
+                                                      : "API Key")),
+                                            )
+                                          ]),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
                     (searchOptionNotifier.searchOption != SearchOption.SauceNao)
                         ? SizedBox()
                         : ExpandablePanel(
@@ -697,7 +788,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               title: Text("SauceNAO Indexes"),
                             ),
                             expanded: Container(
-                              color: Colors.grey.withOpacity(0.25),
+                              color: Theme.of(context).hoverColor,
                               padding: EdgeInsets.only(left: 16, right: 16),
                               child: Wrap(
                                 children: searchOptionNotifier
@@ -732,7 +823,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         valueListenable: _paddingOption,
                         builder: (context, value, child) {
                           return SizedBox(
-                            height: _paddingOption.value,
+                            height: value,
                           );
                         }),
                   ],
@@ -764,7 +855,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           });
           return AlertDialog(
             content: Form(
-              key: _formKey,
+              key: _urlFormKey,
               child: TextFormField(
                 autofocus: true,
                 controller: _urlController,
@@ -785,19 +876,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                 onPressed: () {
                   _urlController.clear();
                   Navigator.pop(context);
                 },
                 child: Text(
                   "Cancel",
-                  style: TextStyle(color: Colors.black),
                 ),
               ),
-              FlatButton(
+              TextButton(
                 onPressed: () {
-                  if (_formKey.currentState.validate()) {
+                  if (_urlFormKey.currentState.validate()) {
                     Navigator.pop(context);
                     _checkURLContentType(_urlController.text);
                     _urlController.clear();
@@ -805,7 +895,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 },
                 child: Text(
                   "OK",
-                  style: TextStyle(color: Colors.black),
                 ),
               ),
             ],
@@ -820,11 +909,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     var token = CancelToken();
     loadingDialog(scaffoldContext: _scaffoldKey.currentContext, token: token);
 
+    var api = (_sauceNaoApi?.value?.isNotEmpty ?? false)
+        ? _sauceNaoApi.value
+        : _sharedSnApi;
+
     if (image is String) {
       try {
-        return await Sauce.sauceNao(mask, _sauceNaoApi)
+        return await Sauce.sauceNao(mask, api)
             .get("&url=" + Uri.encodeComponent(image), cancelToken: token);
       } on DioError catch (e) {
+        if (e?.response?.statusCode == 403 ?? false) {
+          throw NoPermissionException(e.response);
+        }
+        if (e?.response?.statusCode == 429 ?? false) {
+          throw TooManyRequestException(e.response);
+        }
         throw e;
       }
     } else {
@@ -833,9 +932,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
 
       try {
-        return await Sauce.sauceNao(mask, _sauceNaoApi)
+        return await Sauce.sauceNao(mask, api)
             .post("", data: formData, cancelToken: token);
       } on DioError catch (e) {
+        if (e?.response?.statusCode == 403 ?? false) {
+          throw NoPermissionException(e.response);
+        }
         if (e?.response?.statusCode == 429 ?? false) {
           throw TooManyRequestException(e.response);
         }
@@ -859,6 +961,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               if (r?.data != null) {
                 var sauces = SauceNaoObject.fromJson(r.data);
                 if (sauces?.results != null) {
+                  _loadingNotifier.popDialog();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return SaucePage(
+                          sauces: sauces.asFirst(),
+                        );
+                      },
+                    ),
+                  );
+                  return;
                   var sauce = sauces.results[0];
                   sauce.data = sauce.toSauceNaoData();
                   if (_searchOptionNotifier.getAddInfo) {
@@ -879,7 +993,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             "$e",
                             textAlign: TextAlign.start,
                           ),
-                          action: FlatButton(
+                          action: TextButton(
                             child: Text("CONTINUE"),
                             onPressed: () {
                               Navigator.push(context,
@@ -917,10 +1031,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       data: MediaQueryData(textScaleFactor: 1),
                       child: Html(
                         shrinkWrap: true,
-                        data: """${sauces.header.message}
-                              <hr>
-                              </br></br>Use of SauceNAO account or API key is not implemented.
-                              </br><a href="https://www.saucenao.com">SauceNAO Website</a>
+                        data: (_sauceNaoApi?.value?.isNotEmpty ?? false)
+                            ? "Error message: ${sauces.header.message}"
+                            : """
+                              Shared API key has been used above limit across all applications, please use your own API key.
+                              </br>Please refer to Settings->SauceNAO API Key.
+                              """,
+                        onLinkTap: (url) {
+                          if (Uri.parse(url).hasAuthority) {
+                            launch(url);
+                          } else {
+                            url = "https://www.saucenao.com/$url";
+                            launch(url);
+                          }
+                        },
+                        style: {
+                          'p': Style(
+                              fontSize: FontSize(
+                                  16 * MediaQuery.of(context).textScaleFactor))
+                        },
+                      )),
+                  action: null);
+            } on NoPermissionException catch (e) {
+              var sauces = SauceNaoObject.fromJson(e.res.data);
+              _loadingNotifier.popDialog();
+              _errorBannerNotifier.setPop(true);
+              _errorBannerNotifier.setUpBanner(
+                  message: MediaQuery(
+                      data: MediaQueryData(textScaleFactor: 1),
+                      child: Html(
+                        shrinkWrap: true,
+                        data: """
+                              Error message: ${sauces.header.message}<hr>
+                              </br>Please check your SauceNAO API key setting.
                               """,
                         onLinkTap: (url) {
                           if (Uri.parse(url).hasAuthority) {
@@ -961,7 +1104,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               _errorBannerNotifier.setPop(true);
               _errorBannerNotifier.setUpBanner(
                   message: Text("${e.message}"),
-                  action: FlatButton(
+                  action: TextButton(
                     child: Text("HELP"),
                     onPressed: () {
                       properImageHelp(context, _helpController);
@@ -1010,7 +1153,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           "$e",
                           textAlign: TextAlign.start,
                         ),
-                        action: FlatButton(
+                        action: TextButton(
                           child: Text("CONTINUE"),
                           onPressed: () {
                             Navigator.push(context,
@@ -1058,7 +1201,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             _errorBannerNotifier.setPop(true);
             _errorBannerNotifier.setUpBanner(
                 message: Text("${e.message}"),
-                action: FlatButton(
+                action: TextButton(
                   child: Text("HELP"),
                   onPressed: () {
                     properImageHelp(context, _helpController);
@@ -1120,7 +1263,131 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ),
             actions: [
-              FlatButton(
+              TextButton(
+                child: Text("CLOSE"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          );
+        });
+  }
+
+  _snApiDialog() {
+    if (_sauceNaoApi?.value?.isNotEmpty ?? false)
+      _snApiController.text = _sauceNaoApi.value;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return CustomAlertDialog(
+          content: Form(
+            key: _snApiformKey,
+            child: TextFormField(
+              autofocus: true,
+              controller: _snApiController,
+              decoration: InputDecoration(
+                labelText: "API Key",
+              ),
+              validator: (text) {
+                if (text.isEmpty) {
+                  return "Enter API Key";
+                } else {
+                  return null;
+                }
+              },
+            ),
+          ),
+          buttonBarAlignment: MainAxisAlignment.spaceBetween,
+          actions: <Widget>[
+            ValueListenableBuilder(
+              valueListenable: _sauceNaoApi,
+              builder: (context, String value, child) {
+                return (value?.isNotEmpty ?? false)
+                    ? TextButton(
+                        onPressed: () {
+                          _snApiController.clear();
+                          SharedPreferencesUtils.clearApi();
+                          _sauceNaoApi.value = '';
+                        },
+                        child: Text("Clear",
+                            style: TextStyle(
+                                color:
+                                    Theme.of(context).textTheme.error.color)),
+                      )
+                    : SizedBox();
+              },
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    "Cancel",
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (_snApiformKey.currentState.validate()) {
+                      Navigator.pop(context);
+                      SharedPreferencesUtils.setSnApi(_snApiController.text);
+                      _sauceNaoApi.value = _snApiController.text;
+                    }
+                  },
+                  child: Text(
+                    "Set",
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  _snApiHelp() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Scrollbar(
+              isAlwaysShown: true,
+              controller: _helpController,
+              child: Container(
+                height: MediaQuery.of(context).size.height / 4,
+                child: SingleChildScrollView(
+                  controller: _helpController,
+                  child: MediaQuery(
+                      data: MediaQueryData(textScaleFactor: 1),
+                      child: Html(
+                        shrinkWrap: true,
+                        data: """
+                        <p>API key is needed to use SauceNAO API as a search engine.</p>
+                        <p>If not set, you are using shared API key which is shared for all aplications and has very limited number of use, and will fail search attempt if has been used above limit.</p>
+                        <p>You can get your API key by registering <a href='https://saucenao.com/user.php'>here (SauceNAO)</a>.</p>
+                        <p>Go to your account page->settings->API.</p>
+                        """,
+                        onLinkTap: (url) {
+                          print(url);
+                          launch(url);
+                        },
+                        style: {
+                          'p': Style(
+                              fontSize: FontSize(
+                                  16 * MediaQuery.of(context).textScaleFactor))
+                        },
+                      )),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
                 child: Text("CLOSE"),
                 onPressed: () {
                   Navigator.pop(context);

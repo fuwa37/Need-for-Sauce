@@ -278,13 +278,18 @@ class SauceNaoResult {
   }
 }
 
+@JsonSerializable(
+    createFactory: false, ignoreUnannotated: true, createToJson: false)
 abstract class SauceNaoResultDataAbstract {
   List<String> extUrls;
+  @JsonKey(name: "Title")
   String title;
   String daId;
+  @JsonKey(name: "Author Name")
   String authorName;
   String authorUrl;
   int pixivId;
+  @JsonKey(name: "Member Name")
   String memberName;
   int memberId;
   int bcyId;
@@ -293,9 +298,11 @@ abstract class SauceNaoResultDataAbstract {
   DateTime createdAt;
   int pawooId;
   String pawooUserAcct;
+  @JsonKey(name: "Pawoo Username")
   String pawooUserUsername;
   String pawooUserDisplayName;
   int konachanId;
+  @JsonKey(name: "Source")
   String source;
   int anidbAid;
   int idolId;
@@ -303,13 +310,18 @@ abstract class SauceNaoResultDataAbstract {
   int e621Id;
   int gelbooruId;
   int yandereId;
+  @JsonKey(name: "Part/Episode")
   String part;
+  @JsonKey(name: "Year")
   String year;
   String estTime;
   int seigaId;
   int sankakuId;
+  @JsonKey(name: "Creator")
   dynamic creator;
+  @JsonKey(name: "Material")
   String material;
+  @JsonKey(name: "Chars")
   String characters;
   int danbooruId;
   int muId;
@@ -317,7 +329,9 @@ abstract class SauceNaoResultDataAbstract {
   String imdbId;
   int mdId;
   int malId;
+  @JsonKey(name: "Artist")
   String artist;
+  @JsonKey(name: "Author")
   String author;
   String engName;
   String jpName;
@@ -327,9 +341,12 @@ abstract class SauceNaoResultDataAbstract {
 
   Map<String, dynamic> toJsonHtml();
 
+  Map<String, dynamic> toJson();
+
   Future<SauceNaoResultDataAbstract> withInfo();
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoResultData extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -369,6 +386,8 @@ class SauceNaoResultData extends SauceNaoResultDataAbstract {
             : "<a href=${Uri.parse(extUrls[0]).host}>${extUrls[0]}</a>"
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoResultDataToJson(this);
+
   Future<SauceNaoResultData> withInfo() async {
     return this;
   }
@@ -394,4 +413,13 @@ class SauceNaoResultHeader {
         indexId: json["index_id"],
         indexName: json["index_name"],
       );
+}
+
+String snTitle(SauceNaoResultDataAbstract v) {
+  return v.title != null
+      ? v.title
+      : (v.source?.isEmpty ??
+              false || (Uri.tryParse(v.source ?? '')?.isAbsolute ?? false))
+          ? ''
+          : v.source ?? '' + "${(v.part == null) ? '' : (' - ' + v.part)}";
 }

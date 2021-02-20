@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:animations/animations.dart';
 import 'package:chewie/chewie.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,11 +13,163 @@ import 'package:html/dom.dart' as dom hide Text;
 import 'package:html/parser.dart' as parser;
 import 'package:need_for_sauce/common/caching_helper.dart';
 import 'package:need_for_sauce/common/common.dart';
+import 'package:need_for_sauce/common//notifier.dart';
 import 'package:need_for_sauce/common/video_control.dart';
 import 'package:need_for_sauce/models/models.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:union/union.dart';
+
+class SaucePage extends StatefulWidget {
+  SaucePage({Key key, @required this.sauces}) : super(key: key);
+
+  final Union2<SauceNaoObject, TraceObject> sauces;
+
+  @override
+  _SaucePageState createState() => _SaucePageState();
+}
+
+class _SaucePageState extends State<SaucePage> {
+  List<Union2<SauceNaoResult, TraceDocs>> sauceResults;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(),
+        body: ListView.separated(
+          separatorBuilder: (context, index) => Divider(),
+          itemCount: sauceResults.length,
+          itemBuilder: (context, index) {
+            return _result(sauceResults[index]);
+          },
+        ));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.sauces.switchCase((SauceNaoObject v) {
+      sauceResults = v.results.map((e) => e.asFirst()).toList();
+    }, (TraceObject v) {
+      sauceResults = v.docs.map((e) => e.asSecond()).toList();
+    });
+  }
+
+  Widget _result(Union2<SauceNaoResult, TraceDocs> sauceResult) {
+    Widget result;
+
+    sauceResult.switchCase((SauceNaoResult v) {
+      result = OpenContainer(
+        tappable: false,
+        closedBuilder: (context, openContainer) {
+          return SizedBox(
+            height: MediaQuery.of(context).size.height / 6,
+            width: MediaQuery.of(context).size.width,
+            child: Card(
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child:
+                        ExtendedImage(image: imageProvider(v.header.thumbnail)),
+                  ),
+                  Flexible(
+                    flex: 2,
+                    child: Padding(
+                        padding: EdgeInsets.all(0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              snTitle(v.data),
+                              textAlign: TextAlign.start,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            Divider(),
+                            // Flexible(
+                            //   flex: 2,
+                            //   child: GridView.count(
+                            //     shrinkWrap: true,
+                            //     crossAxisCount: 2,
+                            //     childAspectRatio: 3.5,
+                            //     children: v.data
+                            //         .toJson()
+                            //         .entries
+                            //         .where((e) => (e.value != null &&
+                            //             e.key != null &&
+                            //             e.key.isNotEmpty &&
+                            //             e.key != 'Title' &&
+                            //             e.key != 'Source'))
+                            //         .map((e) {
+                            //       String txt;
+                            //       if (e.value != null &&
+                            //           e.key != null &&
+                            //           e.key.isNotEmpty &&
+                            //           e.key != 'Title' &&
+                            //           e.key != 'Source') {
+                            //         txt = "${e.key} : ${e.value}";
+                            //         return Text(txt ?? '');
+                            //       } else
+                            //         return SizedBox();
+                            //     }).toList(),
+                            //   ),
+                            // ),
+                            Spacer(),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  openContainer();
+                                },
+                                child: Text("MORE"),
+                              ),
+                            ),
+                          ],
+                        )),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        openBuilder: (context, action) {
+          return SauceDesc(SauceObject.fromSauceNao(v.header, v.data));
+        },
+      );
+    }, (TraceDocs v) {
+      result = _resultCard(
+          title: v.titleRomaji,
+          image:
+              'https://media.trace.moe/image/${v.anilistId.toString()}/${Uri.encodeComponent(v.filename).toString()}' +
+                  '?t=' +
+                  ((v.at == v.at.truncate())
+                      ? v.at.toInt().toString()
+                      : v.at.toString()) +
+                  '&token=' +
+                  v.tokenthumb);
+    });
+
+    return result;
+  }
+
+  Card _resultCard(
+      {@required String title, @required String image, Widget content}) {
+    return Card(
+      child: Row(children: [
+        ExtendedImage(image: imageProvider(image)),
+        Divider(),
+        InkWell(
+            onTap: () {},
+            child: Column(
+              children: [Text(title), Divider(), content ?? SizedBox()],
+            )),
+      ]),
+    );
+  }
+}
 
 class SauceDesc extends StatefulWidget {
   final SauceObject sauce;
@@ -62,7 +215,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.sauce.mangadexChapter != null)
+    if (widget.sauce.mangadexChapter != null && mounted)
       widget.sauce.mangadexChapter.forEach((element) {
         precacheImage(ExtendedNetworkImageProvider(element), context);
       });
@@ -379,7 +532,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
 
   Widget _videoBar() {
     return Container(
-        color: Colors.blue,
+        color: Theme.of(context).primaryColor,
         child: VideoControls(
           _videoPlayerController,
           showTime: false,

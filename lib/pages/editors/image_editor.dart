@@ -36,7 +36,9 @@ class _ImageEditorState extends State<ImageEditor> {
     return EditorConfig(
         maxScale: 8.0,
         editorMaskColorHandler: (BuildContext context, bool pointerdown) {
-          return Colors.black.withOpacity(pointerdown ? 0.75 : 0.5);
+          return Theme.of(context)
+              .disabledColor
+              .withOpacity(pointerdown ? 0.75 : 0.5);
         },
         cropRectPadding: EdgeInsets.fromLTRB(
             45, MediaQuery.of(context).padding.top + 80, 45, 30),

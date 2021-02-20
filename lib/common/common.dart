@@ -11,7 +11,6 @@ import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import 'package:need_for_sauce/common/notifier.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:package_info/package_info.dart';
 import 'package:mime/mime.dart';
 
 class FlatButtonWithIcon extends FlatButton with MaterialButtonWithIconMixin {
@@ -262,7 +261,7 @@ class NoInfoException implements Exception {
 
   String toString() {
     if (message == null) return "Exception";
-    return "Sauce found but couldn't get additional info : $message";
+    return "Sauce found but couldn't get additional info : $message\nYou can continue or try again";
   }
 }
 
@@ -270,6 +269,17 @@ class TooManyRequestException implements Exception {
   Response res;
 
   TooManyRequestException([this.res]);
+
+  String toString() {
+    if (res == null) return "Exception";
+    return "${res.statusMessage}";
+  }
+}
+
+class NoPermissionException implements Exception {
+  Response res;
+
+  NoPermissionException([this.res]);
 
   String toString() {
     if (res == null) return "Exception";
@@ -409,26 +419,6 @@ void deleteObsoleteApk() async {
   });
 }
 
-class AppInfo extends ChangeNotifier {
-  String appName;
-  String packageName;
-  String version;
-
-  AppInfo() {
-    _init();
-  }
-
-  void _init() async {
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-
-    this.appName = packageInfo.appName;
-    this.packageName = packageInfo.packageName;
-    this.version = packageInfo.version;
-
-    notifyListeners();
-  }
-}
-
 enum SearchOption { SauceBot, Trace, SauceNao }
 
 final searchOptionValues = EnumValues({
@@ -488,4 +478,23 @@ String bbCodetoHtml(String input) {
       return "";
     }
   });
+}
+
+extension CustomTextStyles on TextTheme {
+  TextStyle get error {
+    return TextStyle(
+        fontSize: 12,
+        color: Colors.redAccent,
+        wordSpacing: 0.1,
+        fontWeight: FontWeight.w500);
+  }
+}
+
+extension Extension on Object {
+  bool isNullOrEmpty() => this == null || this == '';
+
+  bool isNullEmptyOrFalse() => this == null || this == '' || !this;
+
+  bool isNullEmptyZeroOrFalse() =>
+      this == null || this == '' || !this || this == 0;
 }

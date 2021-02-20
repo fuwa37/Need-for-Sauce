@@ -25,6 +25,7 @@ String getSourceUrl(String url) {
     return url;
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoPixiv56 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -73,11 +74,14 @@ class SauceNaoPixiv56 extends SauceNaoResultDataAbstract {
         "<b>Member Name<b>": "<a href=$memberUrl>$memberName</a>",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoPixiv56ToJson(this);
+
   Future<SauceNaoPixiv56> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoDeviantArt34 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -119,11 +123,14 @@ class SauceNaoDeviantArt34 extends SauceNaoResultDataAbstract {
         "<b>Author</b>": "<a href=$authorUrl>$authorName</a>",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoDeviantArt34ToJson(this);
+
   Future<SauceNaoDeviantArt34> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoBcy3132 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -177,11 +184,14 @@ class SauceNaoBcy3132 extends SauceNaoResultDataAbstract {
         "<b>Author</b>": "<a href=$memberUrl>$memberName</a>",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoBcy3132ToJson(this);
+
   Future<SauceNaoBcy3132> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoPawoo35 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   DateTime createdAt;
@@ -228,11 +238,14 @@ class SauceNaoPawoo35 extends SauceNaoResultDataAbstract {
             "$pawooUserDisplayName(<a href=${extUrls[0]}>@$pawooUserAcct</a>)",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoPawoo35ToJson(this);
+
   Future<SauceNaoPawoo35> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String source;
@@ -326,6 +339,8 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
     };
   }
 
+  Map<String, dynamic> toJson() => _$SauceNaoAnime2122ToJson(this);
+
   Future<SauceNaoAnime2122> withInfo() async {
     AnimeRelation relation =
         await AnimeRelation.getRelation(aniDbId: this.anidbAid);
@@ -356,6 +371,7 @@ class SauceNaoAnime2122 extends SauceNaoResultDataAbstract {
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoNicoSeiga8 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -401,11 +417,14 @@ class SauceNaoNicoSeiga8 extends SauceNaoResultDataAbstract {
         "<b>Member</b>": "<a href=$memberUrl>$memberName</a>",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoNicoSeiga8ToJson(this);
+
   Future<SauceNaoNicoSeiga8> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoMadokami36 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   int muId;
@@ -447,11 +466,14 @@ class SauceNaoMadokami36 extends SauceNaoResultDataAbstract {
         "<b>MU Link</b>": "<a href=${extUrls[0]}>$muId</a>",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoMadokami36ToJson(this);
+
   Future<SauceNaoMadokami36> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String source;
@@ -501,11 +523,16 @@ class SauceNaoMoviesShows2324 extends SauceNaoResultDataAbstract {
             : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoMoviesShows2324ToJson(this);
+
   Future<SauceNaoMoviesShows2324> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(
+  createFactory: false,
+)
 class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   int mdId;
@@ -516,6 +543,7 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
   String artist;
   String author;
   List<String> chapterPages;
+  @JsonKey(ignore: true)
   List<MangaDexLink> altLink;
   String description;
   String status;
@@ -586,6 +614,8 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
     };
   }
 
+  Map<String, dynamic> toJson() => _$SauceNaoMangadex37ToJson(this);
+
   Future<SauceNaoMangadex37> withInfo() async {
     MangaDexChapter chapter =
         await MangaDexChapter.getInfo(this.mdId.toString());
@@ -609,6 +639,7 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoH18 extends SauceNaoResultDataAbstract {
   String source;
   dynamic creator;
@@ -666,6 +697,8 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
         "<b>Tag(s)</b>": tags?.join(', '),
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoH18ToJson(this);
+
   Future<SauceNaoH18> withInfo() async {
     NhentaiResult info = await NhentaiResult.getInfo(source);
     if (info == null) {
@@ -721,6 +754,7 @@ class SauceNaoH18 extends SauceNaoResultDataAbstract {
       };
 }*/
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoNijie11 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -766,11 +800,14 @@ class SauceNaoNijie11 extends SauceNaoResultDataAbstract {
         "<b>Member</b>": "<a href=$memberUrl>$memberName</a>",
       };
 
+  Map<String, dynamic> toJson() => _$SauceNaoNijie11ToJson(this);
+
   Future<SauceNaoNijie11> withInfo() async {
     return this;
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
   List<String> extUrls;
   String title;
@@ -809,6 +846,8 @@ class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
         memberLink: "https://medibang.com/author/${sn.memberId}",
       );
 
+  Map<String, dynamic> toJson() => _$SauceNaoMedibang20ToJson(this);
+
   Map<String, dynamic> toJsonHtml() => {
         "": "<h3>$title</h3>",
         "<b>Member</b>": "<a href=$memberLink>$memberName</a>",
@@ -821,6 +860,7 @@ class SauceNaoMedibang20 extends SauceNaoResultDataAbstract {
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNaoDanYanGelKonSane621Idol9122625272930
     extends SauceNaoResultDataAbstract {
   SauceNaoDanYanGelKonSane621Idol9122625272930({
@@ -916,6 +956,9 @@ class SauceNaoDanYanGelKonSane621Idol9122625272930
                 : null,
       };
 
+  Map<String, dynamic> toJson() =>
+      _$SauceNaoDanYanGelKonSane621Idol9122625272930ToJson(this);
+
   Future<SauceNaoDanYanGelKonSane621Idol9122625272930> withInfo() async {
     if (idolId != null || sankakuId != null) return this;
 
@@ -957,6 +1000,7 @@ class SauceNaoDanYanGelKonSane621Idol9122625272930
   }
 }
 
+@JsonSerializable(createFactory: false, ignoreUnannotated: true)
 class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
   SauceNao2DMarket19({
     this.extUrls,
@@ -992,6 +1036,8 @@ class SauceNao2DMarket19 extends SauceNaoResultDataAbstract {
             ? null
             : "<a href=${extUrls[0]}>${getHostName(extUrls[0])}</a>"
       };
+
+  Map<String, dynamic> toJson() => _$SauceNao2DMarket19ToJson(this);
 
   Future<SauceNao2DMarket19> withInfo() async {
     return this;

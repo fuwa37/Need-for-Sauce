@@ -115,24 +115,29 @@ class SharedPreferencesUtils {
     return _prefs;
   }
 
-  static Future<bool> setApi(String api) async {
+  static Future<bool> setSnApi(String api) async {
     var prefs = await getPrefs();
 
     return prefs.setString("api_key", api);
   }
 
-  static Future<String> getApi() async {
+  static Future<String> getSnApi() async {
     var prefs = await getPrefs();
 
     String api = prefs.getString("api_key");
 
-    if (api == null) {
-      final _random = new Random();
-
-      api = sn_apis[_random.nextInt(sn_apis.length)];
-    }
-
     return api;
+  }
+
+  static Future<bool> clearApi() async {
+    var prefs = await getPrefs();
+
+    return prefs.remove("api_key");
+  }
+
+  static String getSharedSnApi() {
+    final _random = new Random();
+    return sn_apis[_random.nextInt(sn_apis.length)];
   }
 
   static Future<bool> setAllIndexes(bool val) async {

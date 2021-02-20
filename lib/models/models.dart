@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:need_for_sauce/common/http_request.dart';
 import 'package:need_for_sauce/common/common.dart';
 import 'package:dio/dio.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'anilist.dart';
 
@@ -22,6 +23,8 @@ part 'trace.dart';
 part 'mangadex.dart';
 
 part 'booru.dart';
+
+part 'models.g.dart';
 
 class AnimeRelation {
   int aniDbId;
