@@ -39,15 +39,15 @@ class AnilistObject {
           .post('', data: json.encode({'query': query, 'variables': id}));
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.response:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to anilist.co");
           }

@@ -246,7 +246,7 @@ class _UpdatePageState extends State<UpdatePage> {
             ListTile(
               title: Text('New Version'),
               subtitle: Text(widget.newV),
-              trailing: FlatButton(
+              trailing: TextButton(
                 child: Text("CHANGELOG"),
                 onPressed: () {
                   showDialog(
@@ -294,7 +294,8 @@ class _AboutPageState extends State<AboutPage> {
   String version;
   DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
   AndroidDeviceInfo androidInfo;
-  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldMessengerState> _scaffoldKey =
+      GlobalKey<ScaffoldMessengerState>();
   String repo = "https://github.com/irs37/Need-for-Sauce";
 
   @override

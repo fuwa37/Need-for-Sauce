@@ -37,7 +37,6 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:rect_getter/rect_getter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:union/union.dart';
 
 void main() {
   runApp(MultiProvider(providers: [
@@ -59,7 +58,7 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
     ]);
     return ScreenUtilInit(
-      child: MaterialApp(
+      builder: () => MaterialApp(
         title: "Need for Sauce",
         theme: ThemeData(
             brightness: Brightness.light,
@@ -69,6 +68,7 @@ class MyApp extends StatelessWidget {
                     color: Colors.white, fontWeight: FontWeight.bold)),
             primaryIconTheme: IconThemeData(color: Colors.white),
             iconTheme: IconThemeData(color: Colors.black),
+            accentIconTheme: IconThemeData(color: Colors.grey),
             floatingActionButtonTheme: FloatingActionButtonThemeData(),
             elevatedButtonTheme: ElevatedButtonThemeData(
                 style: ElevatedButton.styleFrom(
@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
           providers: [
             ChangeNotifierProvider(create: (context) => ImageNotifier()),
             ChangeNotifierProvider(create: (context) => ErrorBannerNotifier()),
-            ChangeNotifierProvider(create: (context) => SearchOptionNotifier())
+            ChangeNotifierProvider(create: (context) => SearchOptionNotifier()),
           ],
           child: HomePage(),
         ),
@@ -93,7 +93,8 @@ class MyApp extends StatelessWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription _intentDataStreamSubscription;
-  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldMessengerState> _scaffoldKey =
+      GlobalKey<ScaffoldMessengerState>();
   TextEditingController _urlController = TextEditingController();
   TextEditingController _snApiController = TextEditingController();
   GlobalKey<FormState> _urlFormKey = GlobalKey<FormState>();
@@ -117,20 +118,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
         return Future.value(true);
       },
-      child: Scaffold(
+      child: ScaffoldMessenger(
         key: _scaffoldKey,
-        body: _mainBody(context),
-        bottomNavigationBar: _bab(context),
-        floatingActionButton: MainButton(
-          getMedia: _getMedia,
-          pickUrl: _pickURL,
-          panelController: _panelController,
-          search: _search,
+        child: Scaffold(
+          body: _mainBody(context),
+          bottomNavigationBar: _bab(context),
+          floatingActionButton: MainButton(
+            getMedia: _getMedia,
+            pickUrl: _pickURL,
+            panelController: _panelController,
+            search: _search,
+          ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          resizeToAvoidBottomInset: false,
+          extendBody: true,
+          extendBodyBehindAppBar: true,
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        resizeToAvoidBottomInset: false,
-        extendBody: true,
-        extendBodyBehindAppBar: true,
       ),
     );
   }
@@ -224,7 +228,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         <p>Not each type of search result has additional information
                         </br>It will be gradually added in future updates.</p>
                         """,
-                        onLinkTap: (url) {
+                        onLinkTap: (url, _, __, ___) {
                           print(url);
                           launch(url);
                         },
@@ -257,8 +261,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          FlatButton(
-            padding: EdgeInsets.zero,
+          TextButton(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero),
             onPressed: () {
               if (_panelController.isPanelClosed) {
                 _panelController.animatePanelToSnapPoint();
@@ -596,49 +600,65 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Column(
                   children: [
                     Container(
-                        padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text(
-                                    "Get Additional Information",
-                                    style:
-                                        Theme.of(context).textTheme.subtitle1,
-                                  )),
-                            ),
-                            Flexible(
-                              child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: IconButton(
-                                        tooltip: "Help",
-                                        icon: Icon(
-                                          Icons.help,
-                                          color: Theme.of(context)
-                                              .accentIconTheme
-                                              .color,
-                                        ),
-                                        onPressed: () {
-                                          _addInfoHelp();
-                                        },
-                                      ),
-                                    ),
-                                    Switch(
-                                      value: searchOptionNotifier.getAddInfo ??
-                                          false,
-                                      onChanged: (val) {
-                                        searchOptionNotifier.setGetAddInfo(val);
-                                        SharedPreferencesUtils.setAddInfo(val);
-                                      },
-                                    )
-                                  ]),
-                            ),
-                          ],
-                        )),
+                      padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(
+                                  "Additional Information Confirmation",
+                                  style: Theme.of(context).textTheme.subtitle1,
+                                )),
+                          ),
+                          Flexible(
+                            child:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              Flexible(
+                                child: IconButton(
+                                  tooltip: "Help",
+                                  icon: Icon(
+                                    Icons.help,
+                                    color:
+                                        Theme.of(context).accentIconTheme.color,
+                                  ),
+                                  onPressed: () {
+                                    _addInfoHelp();
+                                  },
+                                ),
+                              ),
+                              DropdownButton<int>(
+                                underline: Container(
+                                  height: 2,
+                                  color:
+                                      Theme.of(context).accentIconTheme.color,
+                                ),
+                                value: searchOptionNotifier.addInfoOption,
+                                onChanged: (val) {
+                                  SharedPreferencesUtils.setAddInfo(val);
+                                  searchOptionNotifier.setAddInfo(val);
+                                },
+                                items: [
+                                  DropdownMenuItem<int>(
+                                    value: -1,
+                                    child: Text("Always Ask"),
+                                  ),
+                                  DropdownMenuItem<int>(
+                                    value: 1,
+                                    child: Text("Always Yes"),
+                                  ),
+                                  DropdownMenuItem<int>(
+                                    value: 0,
+                                    child: Text("Always No"),
+                                  ),
+                                ],
+                              ),
+                            ]),
+                          ),
+                        ],
+                      ),
+                    ),
                     Container(
                       padding: EdgeInsets.fromLTRB(0, 0, 16, 0),
                       child: Row(
@@ -763,6 +783,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 animationDuration: Duration(milliseconds: 150),
                                 useInkWell: true),
                             controller: _expandableController,
+                            collapsed: null,
                             header: ListTile(
                               leading: Checkbox(
                                 tristate: true,
@@ -967,52 +988,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     MaterialPageRoute(
                       builder: (context) {
                         return SaucePage(
-                          sauces: sauces.asFirst(),
-                        );
+                            sauces: sauces,
+                            searchOptionNotifier: _searchOptionNotifier);
                       },
                     ),
                   );
-                  return;
-                  var sauce = sauces.results[0];
-                  sauce.data = sauce.toSauceNaoData();
-                  if (_searchOptionNotifier.getAddInfo) {
-                    try {
-                      sauce.data = await sauce.data.withInfo();
-                      _loadingNotifier.popDialog();
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return SauceDesc(
-                            SauceObject.fromSauceNao(sauce.header, sauce.data));
-                      }));
-                    } on NoInfoException catch (e) {
-                      print(e);
-                      _loadingNotifier.popDialog();
-                      _errorBannerNotifier.setPop(true);
-                      _errorBannerNotifier.setUpBanner(
-                          message: Text(
-                            "$e",
-                            textAlign: TextAlign.start,
-                          ),
-                          action: TextButton(
-                            child: Text("CONTINUE"),
-                            onPressed: () {
-                              Navigator.push(context,
-                                  MaterialPageRoute(builder: (context) {
-                                return SauceDesc(SauceObject.fromSauceNao(
-                                    sauce.header, sauce.data));
-                              }));
-                              _errorBannerNotifier.setPop(false);
-                            },
-                          ));
-                    }
-                  } else {
-                    _loadingNotifier.popDialog();
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                      return SauceDesc(
-                          SauceObject.fromSauceNao(sauce.header, sauce.data));
-                    }));
-                  }
                 } else {
                   print("No Sauce");
                   print(
@@ -1037,7 +1017,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               Shared API key has been used above limit across all applications, please use your own API key.
                               </br>Please refer to Settings->SauceNAO API Key.
                               """,
-                        onLinkTap: (url) {
+                        onLinkTap: (url, _, __, ___) {
                           if (Uri.parse(url).hasAuthority) {
                             launch(url);
                           } else {
@@ -1065,7 +1045,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               Error message: ${sauces.header.message}<hr>
                               </br>Please check your SauceNAO API key setting.
                               """,
-                        onLinkTap: (url) {
+                        onLinkTap: (url, _, __, ___) {
                           if (Uri.parse(url).hasAuthority) {
                             launch(url);
                           } else {
@@ -1082,13 +1062,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   action: null);
             } on DioError catch (e) {
               switch (e.type) {
-                case DioErrorType.CANCEL:
+                case DioErrorType.cancel:
                   break;
-                case DioErrorType.RECEIVE_TIMEOUT:
-                case DioErrorType.SEND_TIMEOUT:
-                case DioErrorType.CONNECT_TIMEOUT:
-                case DioErrorType.RESPONSE:
-                case DioErrorType.DEFAULT:
+                case DioErrorType.receiveTimeout:
+                case DioErrorType.sendTimeout:
+                case DioErrorType.connectTimeout:
+                case DioErrorType.response:
+                case DioErrorType.other:
                   {
                     _loadingNotifier.popDialog();
                     _errorBannerNotifier.setPop(true);
@@ -1136,7 +1116,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               var sauces = TraceObject.fromJson(r.data);
               if (sauces.docs != null) {
                 var sauce = sauces.docs[0];
-                if (_searchOptionNotifier.getAddInfo) {
+                if (_searchOptionNotifier.addInfoOption == 1) {
                   try {
                     sauce = await sauce.withInfo();
                     _loadingNotifier.popDialog();
@@ -1179,13 +1159,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
           } on DioError catch (e) {
             switch (e.type) {
-              case DioErrorType.CANCEL:
+              case DioErrorType.cancel:
                 break;
-              case DioErrorType.RECEIVE_TIMEOUT:
-              case DioErrorType.SEND_TIMEOUT:
-              case DioErrorType.CONNECT_TIMEOUT:
-              case DioErrorType.RESPONSE:
-              case DioErrorType.DEFAULT:
+              case DioErrorType.receiveTimeout:
+              case DioErrorType.sendTimeout:
+              case DioErrorType.connectTimeout:
+              case DioErrorType.response:
+              case DioErrorType.other:
                 {
                   _loadingNotifier.popDialog();
                   _errorBannerNotifier.setPop(true);
@@ -1249,7 +1229,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         <p><a href='https://trace.moe/'><b>Trace</b></a>: Trace or WAIT(What Anime Is This?) is search engine for anime. Performs relatively better for searching anime and will return short video if available otherwise an image.
                         <p>For more information: <a href='https://trace.moe/about'>About Trace(WAIT)</a></p>
                         """,
-                        onLinkTap: (url) {
+                        onLinkTap: (url, _, __, ___) {
                           print(url);
                           launch(url);
                         },
@@ -1373,7 +1353,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         <p>You can get your API key by registering <a href='https://saucenao.com/user.php'>here (SauceNAO)</a>.</p>
                         <p>Go to your account page->settings->API.</p>
                         """,
-                        onLinkTap: (url) {
+                        onLinkTap: (url, _, __, ___) {
                           print(url);
                           launch(url);
                         },

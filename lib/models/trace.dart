@@ -35,9 +35,9 @@ class TraceObject {
     quota = json['quota'];
     quotaTtl = json['quota_ttl'];
     if (json['docs'] != null) {
-      docs = new List<TraceDocs>();
+      List<TraceDocs> docs = [];
       json['docs'].forEach((v) {
-        docs.add(new TraceDocs.fromJson(v));
+        docs.add(TraceDocs.fromJson(v));
       });
     }
   }

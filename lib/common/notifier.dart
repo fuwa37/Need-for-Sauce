@@ -66,7 +66,7 @@ class ErrorBannerNotifier extends ChangeNotifier {
 
 class SearchOptionNotifier extends ChangeNotifier {
   SearchOption searchOption;
-  bool getAddInfo;
+  int addInfoOption;
   SplayTreeMap<String, String> sauceNaoMask;
   bool isAllIndexes;
 
@@ -74,8 +74,8 @@ class SearchOptionNotifier extends ChangeNotifier {
     _initOptions();
   }
 
-  void setGetAddInfo(bool val) {
-    getAddInfo = val;
+  void setAddInfo(int val) {
+    addInfoOption = val;
     notifyListeners();
   }
 
@@ -113,7 +113,7 @@ class SearchOptionNotifier extends ChangeNotifier {
 
   void _initOptions() async {
     searchOption = await SharedPreferencesUtils.getSourceOption();
-    getAddInfo = await SharedPreferencesUtils.getAddInfo();
+    addInfoOption = await SharedPreferencesUtils.getAddInfo();
     sauceNaoMask =
         SplayTreeMap.from(await SharedPreferencesUtils.getSauceNaoMask());
     isAllIndexes = _isAllIndexes();

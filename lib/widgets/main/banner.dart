@@ -31,7 +31,7 @@ class ErrorBanner extends StatelessWidget {
                     ButtonBar(
                         alignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          FlatButton(
+                          TextButton(
                             child: Text("DISMISS"),
                             onPressed: () {
                               errorBannerNotifier.setPop(false);
@@ -39,7 +39,7 @@ class ErrorBanner extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              FlatButton(
+                              TextButton(
                                 child: Text("RETRY"),
                                 onPressed: () {
                                   errorBannerNotifier.setPop(false);

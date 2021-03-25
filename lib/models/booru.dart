@@ -174,21 +174,21 @@ class DanbooruObject {
       response = await Sauce.booru('danbooru', danbooruId.toString()).get('');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
+        case DioErrorType.response:
           {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No post with id $danbooruId found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to internet");
           }
@@ -268,21 +268,21 @@ class GelbooruObject {
       response = await Sauce.booru('gelbooru', gelbooruId.toString()).get('');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
+        case DioErrorType.response:
           {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No post with id $gelbooruId found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to internet");
           }
@@ -444,21 +444,21 @@ class YandereObject {
       response = await Sauce.booru('yandere', yandereId.toString()).get('');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
+        case DioErrorType.response:
           {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No post with id $yandereId found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to internet");
           }
@@ -596,21 +596,21 @@ class KonachanObject {
       response = await Sauce.booru('konachan', konachanId.toString()).get('');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
+        case DioErrorType.response:
           {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No post with id $konachanId found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to internet");
           }
@@ -724,21 +724,21 @@ class E621Object {
       response = await Sauce.booru('e621', e621Id.toString()).get('');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
+        case DioErrorType.response:
           {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No post with id $e621Id found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to internet");
           }

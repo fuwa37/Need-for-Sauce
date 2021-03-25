@@ -375,7 +375,7 @@ class _ImageEditorState extends State<ImageEditor> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 Expanded(
-                  child: FlatButtonWithIcon(
+                  child: TextButtonWithIcon(
                     icon: Icon(
                       Icons.crop,
                     ),
@@ -396,7 +396,7 @@ class _ImageEditorState extends State<ImageEditor> {
                   ),
                 ),
                 Expanded(
-                  child: FlatButtonWithIcon(
+                  child: TextButtonWithIcon(
                     icon: Icon(
                       Icons.flip,
                     ),
@@ -411,7 +411,7 @@ class _ImageEditorState extends State<ImageEditor> {
                   ),
                 ),
                 Expanded(
-                  child: FlatButtonWithIcon(
+                  child: TextButtonWithIcon(
                     icon: Icon(
                       Icons.rotate_left,
                     ),
@@ -427,7 +427,7 @@ class _ImageEditorState extends State<ImageEditor> {
                   ),
                 ),
                 Expanded(
-                  child: FlatButtonWithIcon(
+                  child: TextButtonWithIcon(
                     icon: Icon(
                       Icons.rotate_right,
                     ),
@@ -443,7 +443,7 @@ class _ImageEditorState extends State<ImageEditor> {
                   ),
                 ),
                 Expanded(
-                  child: FlatButtonWithIcon(
+                  child: TextButtonWithIcon(
                     icon: Icon(
                       Icons.restore,
                     ),

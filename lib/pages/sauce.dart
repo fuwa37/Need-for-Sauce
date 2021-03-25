@@ -1,142 +1,268 @@
 import 'dart:io';
 
-import 'package:animations/animations.dart';
 import 'package:chewie/chewie.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:palette_generator/palette_generator.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/style.dart';
-import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:html/dom.dart' as dom hide Text;
 import 'package:html/parser.dart' as parser;
 import 'package:need_for_sauce/common/caching_helper.dart';
 import 'package:need_for_sauce/common/common.dart';
-import 'package:need_for_sauce/common//notifier.dart';
+import 'package:need_for_sauce/common/notifier.dart';
 import 'package:need_for_sauce/common/video_control.dart';
 import 'package:need_for_sauce/models/models.dart';
+import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
-import 'package:union/union.dart';
 
-class SaucePage extends StatefulWidget {
-  SaucePage({Key key, @required this.sauces}) : super(key: key);
+// class _SaucePage extends StatefulWidget {
+//   _SaucePage({Key key, @required this.sauces}) : super(key: key);
 
-  final Union2<SauceNaoObject, TraceObject> sauces;
+//   final Union2<SauceNaoObject, TraceObject> sauces;
 
-  @override
-  _SaucePageState createState() => _SaucePageState();
-}
+//   @override
+//   _SaucePageState createState() => _SaucePageState();
+// }
 
-class _SaucePageState extends State<SaucePage> {
-  List<Union2<SauceNaoResult, TraceDocs>> sauceResults;
+class SaucePage extends StatelessWidget {
+  SaucePage(
+      {Key key, @required this.sauces, @required this.searchOptionNotifier})
+      : super(key: key);
+
+  final dynamic sauces;
+  final SearchOptionNotifier searchOptionNotifier;
 
   @override
   Widget build(BuildContext context) {
+    List<dynamic> sauceResults;
+    sauces.switchCase((SauceNaoObject v) {
+      sauceResults = v.results.toList();
+    }, (TraceObject v) {
+      sauceResults = v.docs.toList();
+    });
     return Scaffold(
         appBar: AppBar(),
-        body: ListView.separated(
-          separatorBuilder: (context, index) => Divider(),
-          itemCount: sauceResults.length,
-          itemBuilder: (context, index) {
-            return _result(sauceResults[index]);
-          },
+        body: ChangeNotifierProvider.value(
+          value: searchOptionNotifier,
+          child: ListView.separated(
+            separatorBuilder: (context, index) => Divider(),
+            itemCount: sauceResults.length,
+            itemBuilder: (context, index) {
+              return _result(
+                  context, searchOptionNotifier, sauceResults[index]);
+            },
+          ),
         ));
   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    widget.sauces.switchCase((SauceNaoObject v) {
-      sauceResults = v.results.map((e) => e.asFirst()).toList();
-    }, (TraceObject v) {
-      sauceResults = v.docs.map((e) => e.asSecond()).toList();
-    });
-  }
-
-  Widget _result(Union2<SauceNaoResult, TraceDocs> sauceResult) {
+  Widget _result(BuildContext context,
+      SearchOptionNotifier searchOptionNotifier, dynamic sauceResult) {
     Widget result;
 
     sauceResult.switchCase((SauceNaoResult v) {
-      result = OpenContainer(
-        tappable: false,
-        closedBuilder: (context, openContainer) {
-          return SizedBox(
-            height: MediaQuery.of(context).size.height / 6,
-            width: MediaQuery.of(context).size.width,
-            child: Card(
-              child: Row(
-                children: [
-                  Flexible(
-                    flex: 1,
-                    child:
-                        ExtendedImage(image: imageProvider(v.header.thumbnail)),
-                  ),
-                  Flexible(
-                    flex: 2,
-                    child: Padding(
-                        padding: EdgeInsets.all(0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              snTitle(v.data),
-                              textAlign: TextAlign.start,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+      ImageProvider _imageProvider = imageProvider(v.header.thumbnail);
+      result = Row(
+        children: [
+          Flexible(
+            flex: 1,
+            child: ExtendedImage(image: _imageProvider),
+          ),
+          Flexible(
+            flex: 2,
+            child: Padding(
+                padding: EdgeInsets.all(0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      snTitle(v.data),
+                      textAlign: TextAlign.start,
+                      overflow: TextOverflow.ellipsis,
+                    ),
 
-                            Divider(),
-                            // Flexible(
-                            //   flex: 2,
-                            //   child: GridView.count(
-                            //     shrinkWrap: true,
-                            //     crossAxisCount: 2,
-                            //     childAspectRatio: 3.5,
-                            //     children: v.data
-                            //         .toJson()
-                            //         .entries
-                            //         .where((e) => (e.value != null &&
-                            //             e.key != null &&
-                            //             e.key.isNotEmpty &&
-                            //             e.key != 'Title' &&
-                            //             e.key != 'Source'))
-                            //         .map((e) {
-                            //       String txt;
-                            //       if (e.value != null &&
-                            //           e.key != null &&
-                            //           e.key.isNotEmpty &&
-                            //           e.key != 'Title' &&
-                            //           e.key != 'Source') {
-                            //         txt = "${e.key} : ${e.value}";
-                            //         return Text(txt ?? '');
-                            //       } else
-                            //         return SizedBox();
-                            //     }).toList(),
-                            //   ),
-                            // ),
-                            Spacer(),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: TextButton(
-                                onPressed: () {
-                                  openContainer();
+                    Divider(),
+                    // Flexible(
+                    //   flex: 2,
+                    //   child: GridView.count(
+                    //     shrinkWrap: true,
+                    //     crossAxisCount: 2,
+                    //     childAspectRatio: 3.5,
+                    //     children: v.data
+                    //         .toJson()
+                    //         .entries
+                    //         .where((e) => (e.value != null &&
+                    //             e.key != null &&
+                    //             e.key.isNotEmpty &&
+                    //             e.key != 'Title' &&
+                    //             e.key != 'Source'))
+                    //         .map((e) {
+                    //       String txt;
+                    //       if (e.value != null &&
+                    //           e.key != null &&
+                    //           e.key.isNotEmpty &&
+                    //           e.key != 'Title' &&
+                    //           e.key != 'Source') {
+                    //         txt = "${e.key} : ${e.value}";
+                    //         return Text(txt ?? '');
+                    //       } else
+                    //         return SizedBox();
+                    //     }).toList(),
+                    //   ),
+                    // ),
+                    Spacer(),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: TextButton(
+                        onPressed: () {
+                          if (searchOptionNotifier.addInfoOption == 1) {
+                            loadingDialog(scaffoldContext: context);
+                            v.data.withInfo().then((res) {
+                              context.read<LoadingNotifier>().popDialog();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return SauceDesc(SauceObject.fromSauceNao(
+                                        v.header, res));
+                                  },
+                                ),
+                              );
+                            });
+                          } else if (searchOptionNotifier.addInfoOption == 0) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return SauceDesc(SauceObject.fromSauceNao(
+                                      v.header, v.data));
                                 },
-                                child: Text("MORE"),
                               ),
-                            ),
-                          ],
-                        )),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-        openBuilder: (context, action) {
-          return SauceDesc(SauceObject.fromSauceNao(v.header, v.data));
+                            );
+                          } else {
+                            bool _val;
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return StatefulBuilder(
+                                  builder: (BuildContext context, setState) {
+                                    return AlertDialog(
+                                      content: Container(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                                "This sauce has more information.\nDo you want to see it?"),
+                                            Text(
+                                                "It will download additional information."),
+                                            CheckboxListTile(
+                                              onChanged: (val) {
+                                                setState(() {
+                                                  _val = val;
+                                                });
+                                              },
+                                              value: _val ?? false,
+                                              title: Text("Don't ask me again"),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("NO"),
+                                          onPressed: () {
+                                            if (_val) {
+                                              searchOptionNotifier
+                                                  .setAddInfo(0);
+                                            }
+                                            Navigator.pop(context, false);
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("YES"),
+                                          onPressed: () {
+                                            if (_val) {
+                                              searchOptionNotifier
+                                                  .setAddInfo(1);
+                                            }
+                                            Navigator.pop(context, true);
+                                          },
+                                        )
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ).then(
+                              (res) {
+                                print(res);
+                                if (res == null) {
+                                  searchOptionNotifier.setAddInfo(-1);
+                                } else if (res) {
+                                  loadingDialog(scaffoldContext: context);
+                                  try {
+                                    v.data.withInfo().then(
+                                      (s) {
+                                        context
+                                            .read<LoadingNotifier>()
+                                            .popDialog();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SauceDesc(
+                                                  SauceObject.fromSauceNao(
+                                                      v.header, s));
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  } on NoInfoException catch (e) {
+                                    print(e);
+                                    context.read<LoadingNotifier>().popDialog();
+                                  }
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) {
+                                        return SauceDesc(
+                                            SauceObject.fromSauceNao(
+                                                v.header, v.data));
+                                      },
+                                    ),
+                                  );
+                                }
+                              },
+                            );
+                          }
+                        },
+                        child: Text("MORE"),
+                      ),
+                    ),
+                  ],
+                )),
+          ),
+        ],
+      );
+      result = FutureBuilder(
+        future: PaletteGenerator.fromImageProvider(_imageProvider),
+        builder: (context, AsyncSnapshot<PaletteGenerator> snapshot) {
+          if (snapshot.data == null) {
+            return CircularProgressIndicator();
+          }
+          return SizedBox(
+              height: MediaQuery.of(context).size.height / 6,
+              width: MediaQuery.of(context).size.width,
+              child: Card(
+                child: Text("abx"),
+                color: snapshot.data?.dominantColor?.color ?? Colors.white,
+              ));
         },
       );
     }, (TraceDocs v) {
@@ -266,7 +392,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                       </br>${widget.sauce.reply}
                       """
                           : widget.sauce.reply,
-                      onLinkTap: (url) {
+                      onLinkTap: (url, _, __, ___) {
                         print(url);
                         canLaunch(url).then((value) {
                           if (value) {
@@ -314,7 +440,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                           data: (widget?.sauce?.source != null)
                               ? widget.sauce.source
                               : '',
-                          onLinkTap: (url) {
+                          onLinkTap: (url, _, __, ___) {
                             canLaunch(url).then((value) {
                               if (value) {
                                 launch(url);
@@ -426,42 +552,16 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                   child: ValueListenableBuilder(
                       valueListenable: page,
                       builder: (context, int index, child) {
-                        return FlutterSlider(
-                            rtl: true,
-                            step: FlutterSliderStep(
-                              isPercentRange: false,
-                            ),
-                            values: [index.toDouble()],
-                            onDragging: (index, a, b) {
-                              _pageController.jumpToPage(a.toInt());
-                            },
-                            max:
-                                widget.sauce.mangadexChapter.length.toDouble() -
-                                    1,
-                            min: 0,
-                            tooltip: FlutterSliderTooltip(
-                                disableAnimation: true,
-                                format: (value) {
-                                  value = value.split('.').first;
-                                  if (value == '0') {
-                                    return "Sauce";
-                                  }
-                                  return value;
-                                },
-                                textStyle: TextStyle(
-                                    fontSize: 12, color: Colors.white),
-                                boxStyle: FlutterSliderTooltipBox(
-                                    decoration:
-                                        BoxDecoration(color: Colors.blue))),
-                            handler: FlutterSliderHandler(
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                    color: Colors.blue, shape: BoxShape.circle),
-                              ),
-                              decoration: BoxDecoration(),
-                            ));
+                        return Slider(
+                          value: index.toDouble(),
+                          onChanged: (index) {
+                            _pageController.jumpToPage(index.toInt());
+                          },
+                          max: widget.sauce.mangadexChapter.length.toDouble() -
+                              1,
+                          min: 0,
+                          divisions: 1,
+                        );
                       }),
                 ))
           ],
@@ -499,7 +599,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
   _pageListener() {}
 
   String _removeAllHtmlTags(String htmlString) {
-    List<String> cleanStrings = new List<String>();
+    List<String> cleanStrings = [];
     String replaced =
         htmlString.replaceAll('</br>', '</p><p>').replaceAll('<h3>', '<p>');
     dom.Document parsed = parser.parse(replaced);
@@ -554,7 +654,7 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
             return _imageShow();
           }
           if (snapshot.connectionState == ConnectionState.waiting ||
-              !_videoPlayerController.value.initialized) {
+              !_videoPlayerController.value.isInitialized) {
             return Center(
               child: CircularProgressIndicator(),
             );

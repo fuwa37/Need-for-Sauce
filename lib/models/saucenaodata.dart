@@ -590,7 +590,7 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
       );
 
   Map<String, dynamic> toJsonHtml() {
-    var links = List<String>();
+    List<String> links = [];
     if (altLink != null) {
       altLink.forEach((e) {
         links.add("<a href=${e.url}>${e.name}</a>");

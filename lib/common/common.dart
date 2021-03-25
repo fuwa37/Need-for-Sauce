@@ -13,8 +13,8 @@ import 'package:need_for_sauce/common/notifier.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:mime/mime.dart';
 
-class FlatButtonWithIcon extends FlatButton with MaterialButtonWithIconMixin {
-  FlatButtonWithIcon({
+class TextButtonWithIcon extends TextButton with MaterialButtonWithIconMixin {
+  TextButtonWithIcon({
     Key key,
     @required VoidCallback onPressed,
     ValueChanged<bool> onHighlightChanged,
@@ -40,22 +40,8 @@ class FlatButtonWithIcon extends FlatButton with MaterialButtonWithIconMixin {
         super(
           key: key,
           onPressed: onPressed,
-          onHighlightChanged: onHighlightChanged,
-          textTheme: textTheme,
-          textColor: textColor,
-          disabledTextColor: disabledTextColor,
-          color: color,
-          disabledColor: disabledColor,
-          focusColor: focusColor,
-          hoverColor: hoverColor,
-          highlightColor: highlightColor,
-          splashColor: splashColor,
-          colorBrightness: colorBrightness,
-          padding: padding,
-          shape: shape,
           clipBehavior: clipBehavior,
           focusNode: focusNode,
-          materialTapTargetSize: materialTapTargetSize,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -205,7 +191,7 @@ class InverseNotched extends CustomClipper<Path> {
     final double p2yA = math.sqrt(r * r - p2xA * p2xA);
     final double p2yB = math.sqrt(r * r - p2xB * p2xB);
 
-    final List<Offset> p = List<Offset>(6);
+    final List<Offset> p = [];
 
     // p0, p1, and p2 are the control points for segment A.
     p[0] = Offset(a - s1, b);
@@ -331,7 +317,7 @@ properImageHelp(BuildContext context, ScrollController _helpController) {
                         <p>For general idea of a proper image, regardless of search engine, please refer to <a href='https://trace.moe/faq'>Trace FAQ</a>
                         (Why I can't find the search result?) and adjust accordingly.</p>
                         """,
-                      onLinkTap: (url) {
+                      onLinkTap: (url, _, __, ___) {
                         print(url);
                         launch(url);
                       },
@@ -345,7 +331,7 @@ properImageHelp(BuildContext context, ScrollController _helpController) {
             ),
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text("CLOSE"),
               onPressed: () {
                 Navigator.pop(context);
@@ -386,7 +372,7 @@ loadingDialog({@required BuildContext scaffoldContext, CancelToken token}) {
 
 showSnackBar(
     {@required String msg,
-    @required ScaffoldState state,
+    @required ScaffoldMessengerState state,
     SnackBarAction act,
     Duration dur = const Duration(seconds: 4)}) {
   state?.removeCurrentSnackBar();

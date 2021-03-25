@@ -236,21 +236,21 @@ class MangaDexObject {
       response = await Sauce.mangaDex().get('manga/$id');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
-        {
+        case DioErrorType.response:
+          {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No manga with id $id found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             throw NoInfoException("Couldn't connect to mangadex.org");
           }
@@ -342,13 +342,14 @@ class MangaDexChapter {
   String link;
 
   factory MangaDexChapter.fromJson(Map<String, dynamic> json) {
-    var pagesUrl = List<String>();
+    List<String> pagesUrl = [];
 
     if (json["server"] != null &&
         json["hash"] != null &&
         (json["page_array"] != null && json["page_array"] is List)) {
       pagesUrl = List.from(json["page_array"])
-          .map((e) => "${json['server'].replaceAll('/data/','/data-saver/')}${json['hash']}/$e")
+          .map((e) =>
+              "${json['server'].replaceAll('/data/', '/data-saver/')}${json['hash']}/$e")
           .toList();
     } else {
       pagesUrl = null;
@@ -393,21 +394,21 @@ class MangaDexChapter {
       response = await Sauce.mangaDex().get('chapter/$id');
     } on DioError catch (e) {
       switch (e.type) {
-        case DioErrorType.RECEIVE_TIMEOUT:
-        case DioErrorType.SEND_TIMEOUT:
-        case DioErrorType.CONNECT_TIMEOUT:
+        case DioErrorType.receiveTimeout:
+        case DioErrorType.sendTimeout:
+        case DioErrorType.connectTimeout:
           {
             throw NoInfoException("Connection timeout");
           }
-        case DioErrorType.RESPONSE:
+        case DioErrorType.response:
           {
             if (e.response.statusCode == 404) {
               throw NoInfoException("No chapter with id $id found");
             }
             throw NoInfoException("Couldn't connect to internet");
           }
-        case DioErrorType.CANCEL:
-        case DioErrorType.DEFAULT:
+        case DioErrorType.cancel:
+        case DioErrorType.other:
           {
             print(e.message);
             throw NoInfoException("Couldn't connect to mangadex.org");

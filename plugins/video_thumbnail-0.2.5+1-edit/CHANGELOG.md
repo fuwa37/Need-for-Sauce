@@ -1,6 +1,7 @@
 ## 0.2.5+1-edit
 
 * Edit MediaMetadataRetriever paramater to use OPTION_CLOSEST option
+* Null-safety migration
 
 ## 0.2.5+1
 

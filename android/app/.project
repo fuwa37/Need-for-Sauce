@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>video_thumbnail</name>
-	<comment>Project video_thumbnail created by Buildship.</comment>
+	<name>app</name>
+	<comment>Project app created by Buildship.</comment>
 	<projects>
 	</projects>
 	<buildSpec>
@@ -22,7 +22,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1614529407526</id>
+			<id>1614529407435</id>
 			<name></name>
 			<type>30</type>
 			<matcher>

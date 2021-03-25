@@ -207,22 +207,20 @@ class SharedPreferencesUtils {
     return searchOptionValues.map[option];
   }
 
-  static Future<bool> setAddInfo(bool s) async {
+  static Future<bool> setAddInfo(int s) async {
     var prefs = await getPrefs();
 
-    return prefs.setBool("add_info", s);
+    return prefs.setInt("add_info", s);
   }
 
-  static Future<bool> getAddInfo() async {
+  static Future<int> getAddInfo() async {
     var prefs = await getPrefs();
 
-    var option = prefs.get('add_info')?.toString();
-
-    if (option == null) {
-      return false;
+    try {
+      return prefs.getInt('add_info') ?? 0;
+    } on Exception {
+      return 0;
     }
-
-    return prefs.getBool('add_info') ?? false;
   }
 
   static Future<bool> setSauce(SauceObject s) async {

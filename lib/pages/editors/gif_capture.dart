@@ -22,8 +22,8 @@ class GifCapture extends StatefulWidget {
 }
 
 class GifCaptureState extends State<GifCapture> with TickerProviderStateMixin {
-  List<int> _imagesTick = List<int>();
-  List<List<int>> _imagesMemory = List<List<int>>();
+  List<int> _imagesTick = [];
+  List<List<int>> _imagesMemory = [];
   int _imageIdx = 0;
   AnimationController _animationController;
   Animation<int> _animation;

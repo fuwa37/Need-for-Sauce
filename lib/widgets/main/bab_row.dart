@@ -20,7 +20,7 @@ class ImageControlBar extends StatelessWidget {
                 ? Row(
                     children: [
                       Flexible(
-                        child: FlatButton(
+                        child: TextButton(
                           child: Container(
                             height: 48,
                             child: Icon(
@@ -36,7 +36,7 @@ class ImageControlBar extends StatelessWidget {
                         ),
                       ),
                       Flexible(
-                        child: FlatButton(
+                        child: TextButton(
                           child: Container(
                             height: 48,
                             child: Icon(
