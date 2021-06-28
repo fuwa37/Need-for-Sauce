@@ -420,10 +420,10 @@ class SauceDescState extends State<SauceDesc> with TickerProviderStateMixin {
                                 15 * MediaQuery.of(context).textScaleFactor))
                       },
                       customRender: {
-                        "spoiler": (context, child, attributes, element) {
+                        "spoiler": (context, child) {
                           return child;
                         },
-                        "li": (context, child, attributes, element) {
+                        "li": (context, child) {
                           return child;
                         }
                       },

@@ -1,7 +1,18 @@
-## 0.2.5+1-edit
+## edit
 
 * Edit MediaMetadataRetriever paramater to use OPTION_CLOSEST option
-* Null-safety migration
+
+## 0.3.3
+
+* Revert the 0.3.2, bump version to 0.3.3
+
+## 0.3.1
+
+* Fix some null safety warnings, bump version to 0.3.1
+
+## 0.3.0
+
+* Add the null safety support ( Thanks leynier41@gmail.com ), bump version to 0.3.0
 
 ## 0.2.5+1
 

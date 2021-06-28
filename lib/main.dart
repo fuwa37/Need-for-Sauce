@@ -74,10 +74,12 @@ class MyApp extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                     onPrimary: Colors.white, primary: Colors.blue))),
         darkTheme: ThemeData(
-            brightness: Brightness.dark,
-            elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                    onPrimary: Colors.blue, primary: Colors.red))),
+          brightness: Brightness.dark,
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+                onPrimary: Colors.blue, primary: Colors.red),
+          ),
+        ),
         home: MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (context) => ImageNotifier()),

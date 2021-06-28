@@ -617,23 +617,23 @@ class SauceNaoMangadex37 extends SauceNaoResultDataAbstract {
   Map<String, dynamic> toJson() => _$SauceNaoMangadex37ToJson(this);
 
   Future<SauceNaoMangadex37> withInfo() async {
-    MangaDexChapter chapter =
-        await MangaDexChapter.getInfo(this.mdId.toString());
+    // MangaDexChapter chapter =
+    //     await MangaDexChapter.getInfo(this.mdId.toString());
 
-    if (chapter == null) return this;
+    // if (chapter == null) return this;
 
-    MangaDexObject info =
-        await MangaDexObject.getInfo(chapter.mangaId.toString());
+    // MangaDexObject info =
+    //     await MangaDexObject.getInfo(chapter.mangaId.toString());
 
-    if (info == null) return this;
+    // if (info == null) return this;
 
-    this.chapterPages = chapter.pageArray;
-    this.altLink = info.links;
-    this.description = info.description;
-    this.status = info.status;
-    this.genres = info.genres;
-    this.rating = info.rating.bayesian;
-    this.addInfo = ['MangaDex', 'https://mangadex.org/'];
+    // this.chapterPages = chapter.pageArray;
+    // this.altLink = info.links;
+    // this.description = info.description;
+    // this.status = info.status;
+    // this.genres = info.genres;
+    // this.rating = info.rating.bayesian;
+    // this.addInfo = ['MangaDex', 'https://mangadex.org/'];
 
     return this;
   }
